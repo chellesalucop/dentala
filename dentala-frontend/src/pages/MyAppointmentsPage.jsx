@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../api';
 import { Link } from 'react-router-dom';
 import { CalendarIcon, Clock, MapPin, ChevronDown, X, AlertCircle, Save, User, Mail, Phone, Trash2 } from 'lucide-react';
 import DatePicker from "react-datepicker";
@@ -46,10 +47,10 @@ export default function MyAppointmentsPage() {
     // 2. Update the visual state immediately
     setNewDate(formattedDate);
 
-    // 3. 🛡️ CRITICAL: Fetch slots using formattedDate (NOT the newDate state variable)
+    // 3. CRITICAL: Fetch slots using formattedDate (NOT the newDate state variable)
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/appointments/check-slots?date=${formattedDate}`, {
+      const response = await fetch(`${API_URL}/api/appointments/check-slots?date=${formattedDate}`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json' 
@@ -76,19 +77,19 @@ export default function MyAppointmentsPage() {
     }
   };
 
-  // 🛡️ THE EXACT-MATCH FIX: Converts all DB formats to "7:00 AM" style
+  // THE EXACT-MATCH FIX: Converts all DB formats to "7:00 AM" style
   useEffect(() => {
     const fetchTakenSlots = async () => {
       if (!newDate) return;
       
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch(`http://127.0.0.1:8000/api/appointments/check-slots?date=${newDate}`, {
+        const response = await fetch(`${API_URL}/api/appointments/check-slots?date=${newDate}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
         
-        // 🛡️ NORMALIZER: Converts "19:00" or "07:00:00" to "7:00 PM" / "7:00 AM"
+        // NORMALIZER: Converts "19:00" or "07:00:00" to "7:00 PM" / "7:00 AM"
         const apiTaken = (data.taken_times || []).map(time => {
           const rawTime = time.includes(' ') ? time.split(' ')[1] : time;
           const [hours, minutes] = rawTime.split(':');
@@ -107,7 +108,7 @@ export default function MyAppointmentsPage() {
           .filter(app => 
             app.appointment_date === newDate && 
             app.id !== editingId &&
-            (app.status === 'pending' || app.status === 'confirmed') // ✅ Only block active ones
+            (app.status === 'pending' || app.status === 'confirmed') // Only block active ones
           )
           .map(app => app.preferred_time.toUpperCase());
 
@@ -123,7 +124,7 @@ export default function MyAppointmentsPage() {
     fetchTakenSlots();
   }, [newDate, appointments, editingId]);
 
-  // 🛡️ Custom DatePicker styling to match AppointmentFormPage
+  // Custom DatePicker styling to match AppointmentFormPage
   const datePickerStyles = `
     .react-datepicker {
       font-family: inherit;
@@ -144,7 +145,7 @@ export default function MyAppointmentsPage() {
       background-color: #f9fafb !important;
     }
     
-    /* 🛡️ THE GHOST INDICATOR KILLER */
+    /* THE GHOST INDICATOR KILLER */
     
     /* 1. Neutralize the 'keyboard focus' day so it doesn't highlight across months */
     .react-datepicker__day--keyboard-selected {
@@ -173,7 +174,7 @@ export default function MyAppointmentsPage() {
       cursor: pointer !important;
     }
     
-    /* 🛡️ HIDE TIME SELECT ARROW: Remove default dropdown arrow */
+    /* HIDE TIME SELECT ARROW: Remove default dropdown arrow */
     select {
       -webkit-appearance: none;
       -moz-appearance: none;
@@ -188,12 +189,12 @@ export default function MyAppointmentsPage() {
     }
   `;
 
-  // 🛡️ Fetch dentists for reverse lookup
+  // Fetch dentists for reverse lookup
   useEffect(() => {
     const fetchDentists = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch('http://127.0.0.1:8000/api/dentists', {
+        const response = await fetch(`${API_URL}/api/dentists`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -210,19 +211,19 @@ export default function MyAppointmentsPage() {
     fetchDentists();
   }, []);
 
-  // 🛡️ Helper function to get dentist name by email
+  // Helper function to get dentist name by email
   const getDentistName = (email) => {
     if (!Array.isArray(dentists) || dentists.length === 0) return email;
     const found = dentists.find(d => d.email === email);
     return found ? `Dr. ${found.name}` : email;
   };
 
-  // 🛡️ Fetch appointments
+  // Fetch appointments
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch('http://127.0.0.1:8000/api/appointments', {
+        const response = await fetch(`${API_URL}/api/appointments`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -241,7 +242,7 @@ export default function MyAppointmentsPage() {
     fetchAppointments();
   }, []);
 
-  // 🛡️ UNIFIED HISTORY LOGIC: Grouping all non-active statuses
+  // UNIFIED HISTORY LOGIC: Grouping all non-active statuses
 const historyStatuses = ['completed', 'cancelled', 'no-show', 'declined', 'expired'];
 
 const sortedAppointments = appointments
@@ -252,31 +253,31 @@ const sortedAppointments = appointments
   })
   .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  // 🛡️ Get counts for each tab
+  // Get counts for each tab
   const getCounts = (tab) => appointments.filter(app => {
     if (tab === 'upcoming') return app.status === 'pending' || app.status === 'confirmed';
     if (tab === 'history') return historyStatuses.includes(app.status);
     return false;
   }).length;
 
-  // 🛡️ Modal state
+  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // 🛡️ Open modal with appointment details
+  // Open modal with appointment details
   const openModal = (appointment) => {
     setSelectedAppointment(appointment);
     setIsModalOpen(true);
   };
 
-  // 🛡️ Guarded Appointment Cancellation
+  // Guarded Appointment Cancellation
   const handleCancel = async (id) => {
-    // 🛡️ REQUIRED REASON WORKFLOW: Prompt for cancellation reason
+    // REQUIRED REASON WORKFLOW: Prompt for cancellation reason
     const reason = window.prompt(
       "Please provide a reason for cancellation:\n\nThis helps us improve our service and prevent future issues."
     );
 
-    // 🛡️ VALIDATION: Block cancellation if no reason is provided
+    // VALIDATION: Block cancellation if no reason is provided
     if (!reason || reason.trim() === '') {
       alert('Cancellation reason is required. Please provide a reason to continue.');
       return;
@@ -290,7 +291,7 @@ const sortedAppointments = appointments
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/appointments/${id}/cancel`, {
+      const response = await fetch(`${API_URL}/api/appointments/${id}/cancel`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -342,7 +343,7 @@ const sortedAppointments = appointments
     const token = localStorage.getItem('auth_token');
     try {
       const deletePromises = filteredAppointments.map(appointment => 
-        fetch(`http://127.0.0.1:8000/api/appointments/${appointment.id}`, {
+        fetch(`${API_URL}/api/appointments/${appointment.id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -372,7 +373,7 @@ const sortedAppointments = appointments
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/appointments/${id}/reschedule`, {
+      const response = await fetch(`${API_URL}/api/appointments/${id}/reschedule`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

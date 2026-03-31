@@ -8,7 +8,7 @@ export default function SettingsPage() {
 
   // Ensure you are pointing to the BACKEND port (8000), not the frontend port (5173)
 
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = API_URL;
 
  
 
@@ -149,7 +149,7 @@ export default function SettingsPage() {
 
     try {
 
-      const response = await fetch('http://127.0.0.1:8000/api/user/profile', {
+      const response = await fetch(`${BASE_URL}/api/user/profile`, {
 
         method: 'PUT',
 
@@ -211,7 +211,7 @@ export default function SettingsPage() {
 
     try {
 
-      const response = await fetch('http://127.0.0.1:8000/api/user/password', {
+      const response = await fetch(`${BASE_URL}/api/user/password`, {
 
         method: 'PUT',
 
@@ -371,7 +371,7 @@ export default function SettingsPage() {
 
     try {
 
-      const response = await fetch('http://127.0.0.1:8000/api/user/profile-picture', {
+      const response = await fetch(`${BASE_URL}/api/user/profile-picture`, {
 
         method: 'POST',
 
