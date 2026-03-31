@@ -1,3 +1,6 @@
+# Force fresh build
+RUN echo "Build timestamp: $(date)" > /tmp/build-info
+
 FROM node:20-alpine AS frontend-build
 
 # Set working directory for frontend build
