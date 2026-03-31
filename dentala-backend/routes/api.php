@@ -6,6 +6,15 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
 
+// Health check endpoint for Render
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now()->toISOString(),
+        'version' => '1.0.0'
+    ]);
+});
+
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES

@@ -1,8 +1,26 @@
+FROM node:20-alpine AS frontend-build
+
+# Set working directory for frontend build
+WORKDIR /app/frontend
+
+# Copy frontend package files
+COPY dentala-frontend/package*.json ./
+
+# Install frontend dependencies
+RUN npm ci
+
+# Copy frontend source code
+COPY dentala-frontend/ ./
+
+# Build frontend
+RUN npm run build
+
+# Backend stage
 FROM php:8.4-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git unzip libpq-dev
+    git unzip libpq-dev curl
 
 # Install PostgreSQL extension
 RUN docker-php-ext-install pdo pdo_pgsql
@@ -13,11 +31,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy backend files
+COPY dentala-backend/ ./
+
+# Copy frontend build to public directory
+COPY --from=frontend-build /app/frontend/dist ./public
 
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
+
+# Set permissions
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+RUN chmod -R 775 /app/storage /app/bootstrap/cache
 
 # Expose port
 EXPOSE 10000
