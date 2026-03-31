@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../api';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, User as UserIcon, X } from 'lucide-react';
 
@@ -34,13 +35,13 @@ export default function HomePage() {
 
         // Fetch both Appointments and Registered Dentists simultaneously
         const [appRes, dentistRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/appointments', { headers }),
-          fetch('http://127.0.0.1:8000/api/dentists', { headers })
+          fetch(`${API_URL}/api/appointments`, { headers }),
+          fetch(`${API_URL}/api/dentists`, { headers })
         ]);
 
         if (appRes.ok) {
           const appData = await appRes.json();
-          // 🛡️ THE PRIORITY SORT: Upcoming first, then by Closest Date
+          // THE PRIORITY SORT: Upcoming first, then by Closest Date
           const prioritized = appData
             .filter(app => app.status === 'pending' || app.status === 'confirmed')
             .sort((a, b) => {
@@ -227,7 +228,7 @@ export default function HomePage() {
                 <div className="h-48 bg-gray-50 flex items-end justify-center pt-4">
                   {dentist.profile_photo_path ? (
                     <img 
-                      src={`http://127.0.0.1:8000/storage/${dentist.profile_photo_path}`} 
+                      src={`${API_URL}/storage/${dentist.profile_photo_path}`} 
                       alt={dentist.name} 
                       className="w-32 h-40 rounded-t-full object-cover" 
                     />
