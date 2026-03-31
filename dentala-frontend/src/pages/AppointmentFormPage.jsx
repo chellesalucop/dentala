@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { API_URL } from '../api';
 
 export default function AppointmentFormPage() {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export default function AppointmentFormPage() {
     const loadDentists = async () => {
       setIsLoadingDentists(true);
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/dentists', {
+        const response = await fetch(`${API_URL}/api/dentists`, {
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             'Accept': 'application/json'
@@ -125,7 +126,7 @@ export default function AppointmentFormPage() {
       
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch(`http://127.0.0.1:8000/api/appointments/check-slots?date=${formData.appointmentDate}`, {
+        const response = await fetch(`${API_URL}/api/appointments/check-slots?date=${formData.appointmentDate}`, {
           headers: { 
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json' 
