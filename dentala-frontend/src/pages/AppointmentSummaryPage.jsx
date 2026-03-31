@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../api';
 
 export default function AppointmentSummaryPage() {
   const location = useLocation();
@@ -22,7 +23,7 @@ export default function AppointmentSummaryPage() {
   useEffect(() => {
     const fetchDentists = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/dentists', {
+        const response = await fetch(`${API_URL}/api/dentists`, {
           headers: { 
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             'Accept': 'application/json'
@@ -68,7 +69,7 @@ export default function AppointmentSummaryPage() {
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/appointments', {
+      const response = await fetch(`${API_URL}/api/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
