@@ -1,0 +1,513 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Appointment;
+use App\Mail\WalkinReceiptMail;
+use App\Mail\PatientNotificationMail;
+use App\Mail\AdminNotificationMail;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+// 🛡️ THE CRITICAL MISSING PIECE: Add this exact line at the top
+use Illuminate\Support\Str;
+
+class AppointmentController extends Controller
+{
+    /**
+     * For Patients: See only their own appointments.
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+        $this->autoExpireAppointments(); // 🛡️ Run Janitor for patient's view too
+
+        // 🛡️ PATIENT FULL IDENTITY PAYLOAD: Include profile photo and booking email
+        $appointments = Appointment::where('appointments.user_id', $user->id)
+            ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
+            ->orderBy('appointment_date', 'asc')
+            ->get([
+                'appointments.*', // Simplest way to ensure all fields are sent
+                'users.profile_photo_path', 
+                'users.email as user_email'
+            ]);
+
+        return response()->json($appointments);
+    }
+
+    /**
+     * For Patients: Book a new appointment.
+     */
+    public function store(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+        // 🛡️ THE "STRICT TOTAL" GUARD
+        // We count both PENDING and CONFIRMED. 
+        // This stops them from filling the calendar.
+        $activeCount = Appointment::where('user_id', $user->id)
+                                    ->whereIn('status', ['pending', 'confirmed'])
+                                    ->count();
+
+        if ($activeCount >= 3) {
+            return response()->json([
+                'message' => 'Limit Reached: You can only have 3 active appointments at a time. Please complete or cancel your existing ones to book more.'
+            ], 429);
+        }
+
+        // 🛡️ SILENT GUARD: Backend enforces strict validation even if Frontend is relaxed
+        $messages = [
+            'phone.digits' => 'Oops! Your phone number must be exactly 11 digits.',
+            'email.regex' => 'Please provide a valid email address. (example@gmail.com)',
+            'email.email' => 'Please provide a valid email address. (example@gmail.com)',
+            'full_name.regex' => 'Names should only contain letters, periods, and spaces.',
+            'full_name.required' => 'Full name is required for medical records.',
+            'full_name.max' => 'Patient name cannot exceed 50 characters.',
+            'phone.required' => 'Phone number is required.',
+            'phone.numeric' => 'Phone number must contain only digits.',
+            'phone.digits_between' => 'Please enter a valid 10 or 11-digit phone number.',
+            'appointment_date.after' => 'Appointments must be booked at least one day in advance.',
+        ];
+
+        $validated = $request->validate([
+            // Allows letters, spaces, and periods (e.g., "Dr. Juan Dela Cruz")
+            'full_name' => 'required|string|regex:/^[a-zA-Z\s.]+$/|max:50',
+            
+            // Strictly numeric and exactly 11 digits
+            'phone' => 'required|numeric|digits:11',
+            
+            // 🛡️ STRICT EMAIL GUARD: Ensures it ends with a valid TLD (2-4 chars)
+            'email' => [
+                'required',
+                'email',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/'
+            ],
+            'service_type' => 'required|string|max:255',
+            'custom_service' => 'nullable|string|max:255',
+            'preferred_dentist' => 'required|string|max:255',
+            'medical_conditions' => 'nullable|array',
+            'others' => 'nullable|string|max:255',
+            'appointment_date' => 'required|date|after:today',
+            'preferred_time' => 'required|string|max:50',
+        ], $messages);
+
+        $validated['user_id'] = $user->id;
+        $validated['status'] = 'pending'; 
+
+        $appointment = Appointment::create($validated);
+
+        // 📧 Notify Admin
+        try {
+            Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+        } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
+
+        return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
+    }
+
+    /**
+     * For Patients: Cancel their own appointment with required reason
+     */
+    public function cancel(Request $request, $id)
+    {
+        // 🛡️ VALIDATION: Require cancellation reason for patient cancellations
+        $request->validate([
+            'cancellation_reason' => 'required|string|max:500'
+        ], [
+            'cancellation_reason.required' => 'Please provide a reason for cancellation.'
+        ]);
+
+        $appointment = Appointment::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $appointment->status = 'cancelled';
+        $appointment->cancellation_reason = $request->cancellation_reason;
+        $appointment->save();
+
+        // 📧 THE MISSING PIECE: Notify the Dentist (Admin)
+        try {
+            \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
+                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
+        } catch (\Exception $e) { 
+            \Log::error("Cancellation Mail to Admin failed: " . $e->getMessage()); 
+        }
+
+        return response()->json(['message' => 'Appointment cancelled successfully.']);
+    }
+
+    /**
+     * For Patients: Reschedule an appointment.
+     */
+    public function reschedule(Request $request, $id)
+    {
+        $request->validate([
+            'appointment_date' => 'required|date|after:today',
+            'preferred_time' => 'required|string|max:50',
+        ], [
+            'appointment_date.after' => 'Appointments must be booked at least one day in advance.',
+        ]);
+
+        $appointment = Appointment::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $appointment->appointment_date = $request->appointment_date;
+        $appointment->preferred_time = $request->preferred_time;
+        
+        $appointment->status = 'pending'; 
+        $appointment->save();
+
+        return response()->json([
+            'message' => 'Appointment rescheduled successfully.',
+            'appointment' => $appointment
+        ]);
+    }
+
+    /**
+     * ENHANCED: For Admins Full List with Complete Data Hydration
+     * Used for the Appointments tab - includes all fields for comprehensive view
+     */
+    public function adminIndex(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Access Denied.'], 403);
+        }
+
+        $this->autoExpireAppointments($user->email); // 🛡️ Run Janitor
+
+        // 🛡️ ADMIN STRENGTH: Include all fields for comprehensive appointment management
+        // 🔄 CHRONOLOGICAL QUEUE: Two-tier sorting for admin workflow
+        // 📅 NEWEST FIRST: Include created_at for booking sequence
+        $appointments = Appointment::where('preferred_dentist', $user->email)
+            ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
+            ->orderBy('appointment_date', 'asc')
+            ->orderBy('preferred_time', 'asc')
+            ->get([
+                'appointments.id', 'appointments.user_id', 'appointments.full_name', 'appointments.phone', 'appointments.email', 
+                'appointments.service_type', 'appointments.custom_service', 'appointments.preferred_dentist',
+                'appointments.medical_conditions', 'appointments.others', 'appointments.appointment_date', 
+                'appointments.preferred_time', 'appointments.status', 'appointments.cancellation_reason',
+                'appointments.created_at', 'appointments.updated_at', // 🛡️ CRITICAL MISSING PIECE
+                'users.profile_photo_path', 'users.email as user_email'
+            ]);
+
+        return response()->json($appointments);
+    }
+
+    /**
+     * ENHANCED: For Admins Dashboard with Full Data Hydration
+     * Includes custom_service and others fields for immediate admin visibility
+     */
+    public function dashboardStats(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin') return response()->json(['message' => 'Access Denied.'], 403);
+
+        // 🛡️ THE CRITICAL PARAMETER FIX: Pass the authenticated admin's email
+        $this->autoExpireAppointments($user->email); 
+
+        // Use the imported Carbon class correctly
+        $today = \Carbon\Carbon::today()->toDateString();
+
+        // 🛡️ DATA HYDRATION: Ensure EVERY field used in JSX is selected here
+        $selectFields = [
+            'appointments.id', 'appointments.user_id', 'appointments.full_name', 'appointments.phone', 'appointments.email', 
+            'appointments.service_type', 'appointments.custom_service', 'appointments.preferred_dentist',
+            'appointments.medical_conditions', 'appointments.others', 'appointments.appointment_date', 
+            'appointments.preferred_time', 'appointments.status', 'appointments.cancellation_reason',
+            'appointments.created_at', 'appointments.updated_at', // 🛡️ NECESSARY FOR TIMESTAMPS
+            'users.profile_photo_path', 'users.email as user_email'
+        ];
+
+        // 1. Fetch Today's Schedule (Only Confirmed or Completed for today)
+        $todaysSchedule = Appointment::where('preferred_dentist', $user->email)
+            ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
+            ->where('appointment_date', $today)
+            ->whereIn('status', ['confirmed', 'completed'])
+            // 🛡️ THE FIX: Convert '07:00 AM' strings to actual time values for chronological sorting
+            ->orderByRaw("STR_TO_DATE(preferred_time, '%h:%i %p') ASC") 
+            ->get($selectFields)
+            ->map(function ($appointment) {
+                // 🛡️ DASHBOARD STATS STRING SANITIZATION: Truncate long strings
+                $appointment->full_name = Str::limit($appointment->full_name, 30);
+                $appointment->service_type = Str::limit($appointment->service_type, 25);
+                $appointment->custom_service = $appointment->custom_service ? Str::limit($appointment->custom_service, 25) : null;
+                return $appointment;
+            });
+
+        // 2. Fetch Pending Approvals (Regardless of date)
+        $pendingApprovals = Appointment::where('preferred_dentist', $user->email)
+            ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
+            ->where('status', 'pending')
+            ->orderBy('appointment_date', 'asc')
+            ->get($selectFields)
+            ->map(function ($appointment) {
+                // 🛡️ DASHBOARD STATS STRING SANITIZATION: Truncate long strings
+                $appointment->full_name = Str::limit($appointment->full_name, 30);
+                $appointment->service_type = Str::limit($appointment->service_type, 25);
+                $appointment->custom_service = $appointment->custom_service ? Str::limit($appointment->custom_service, 25) : null;
+                return $appointment;
+            });
+
+        // 3. Fetch Skipped Appointments for No-Show Analytics
+        // 🛡️ NO-SHOW TRACKING: Monitor patient attendance patterns
+        $skippedAppointments = Appointment::where('preferred_dentist', $user->email)
+            ->where('status', 'skipped')
+            ->orderBy('appointment_date', 'desc')
+            ->limit(10) // Show recent 10 skipped appointments
+            ->get([
+                'id', 'user_id', 'full_name', 'phone', 'email', 
+                'service_type', 'preferred_dentist',
+                'appointment_date', 'preferred_time', 'status'
+            ]);
+
+        // 4. Enhanced Response with Admin Metadata
+        return response()->json([
+            'today' => Carbon::today()->format('F j, Y'),
+            'todaysSchedule' => $todaysSchedule,
+            'pendingApprovals' => $pendingApprovals,
+            'skippedAppointments' => $skippedAppointments,
+            'meta' => [
+                'todaysCount' => $todaysSchedule->count(),
+                'pendingCount' => $pendingApprovals->count(),
+                'skippedCount' => $skippedAppointments->count(),
+                'hasCustomServices' => $pendingApprovals->contains('service_type', 'Other'),
+                'hasMedicalAlerts' => $pendingApprovals->contains(function($appointment) {
+                    return !empty($appointment->medical_conditions) || !empty($appointment->others);
+                })
+            ]
+        ]);
+    }
+
+    /**
+     * For Admins: Update status with Audit Trail for Declined and No-Shows
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin') return response()->json(['message' => 'Access Denied.'], 403);
+
+        // 🛡️ THE FIX: Added 'declined', 'no-show', and 'expired' to the allowed list to prevent 422 errors
+        $request->validate([
+            'status' => 'required|string|in:pending,confirmed,completed,cancelled,skipped,declined,no-show,expired',
+            'cancellation_reason' => 'nullable|string|max:500'
+        ]);
+
+        $appointment = Appointment::where('id', $id)
+            ->where('preferred_dentist', $user->email)
+            ->firstOrFail();
+
+        $appointment->status = $request->status;
+        
+        // 🛡️ AUDIT TRAIL: Save reason for ANY unsuccessful outcome
+        $unsuccessfulStatuses = ['cancelled', 'declined', 'no-show', 'skipped', 'expired'];
+        
+        if (in_array($request->status, $unsuccessfulStatuses)) {
+            // If no reason was provided by the dentist, we can set a default or leave as null
+            $appointment->cancellation_reason = $request->cancellation_reason;
+        } else {
+            // Data hygiene: Clear reason if status is active (pending/confirmed/completed)
+            $appointment->cancellation_reason = null;
+        }
+        
+        // 🛡️ Ensure the timestamp updates so the frontend has a valid date to parse
+        $appointment->touch();
+        $appointment->save();
+
+        // 📧 Notify Patient
+        try {
+            Mail::to($appointment->email)->send(new PatientNotificationMail(
+                $appointment, 
+                $request->status, 
+                $request->cancellation_reason ?? ''
+            ));
+        } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
+
+        return response()->json([
+            'message' => "Appointment marked as {$request->status}.", 
+            'appointment' => $appointment->fresh() // Return the refreshed model with new timestamps
+        ]);
+    }
+
+    /**
+     * Check available slots for a given date
+     * Returns array of taken times for frontend slot management
+     */
+    public function checkSlots(Request $request)
+    {
+        $request->validate(['date' => 'required|date']);
+        $date = $request->query('date');
+
+        // 🛡️ SLOT STATUS GUARD: Only block pending and confirmed appointments
+        // Remove 'completed' to free up slots from past appointments
+        $takenSlots = Appointment::where('appointment_date', $date)
+            ->whereIn('status', ['pending', 'confirmed']) 
+            ->pluck('preferred_time')
+            ->map(function ($time) {
+                // 🛡️ TIME FORMAT FIX: Convert datetime to simple time format for frontend
+                return \Carbon\Carbon::parse($time)->format('h:i A');
+            })
+            ->toArray();
+
+        return response()->json([
+            'taken_times' => $takenSlots,
+            'date' => $date
+        ], 200);
+    }
+
+    /**
+     * Delete a specific appointment
+     */
+    public function destroy(Request $request, $id)
+    {
+        $appointment = Appointment::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        // 🛡️ SECURITY: Only allow deleting if it's NOT upcoming
+        if (in_array($appointment->status, ['pending', 'confirmed'])) {
+            return response()->json(['message' => 'Cannot delete active appointments.'], 403);
+        }
+
+        $appointment->delete();
+
+        return response()->json(['message' => 'Appointment deleted.']);
+    }
+
+    /**
+     * Clear all appointments by status (past or cancelled)
+     */
+    public function clearByStatus(Request $request, $status)
+    {
+        // 🛡️ SECURITY: Only allow clearing 'completed' or 'cancelled'
+        $validStatuses = ['completed', 'cancelled'];
+        if (!in_array($status, $validStatuses)) {
+            return response()->json(['message' => 'Invalid clear request.'], 400);
+        }
+
+        Appointment::where('user_id', auth()->id())
+            ->where('status', $status)
+            ->delete();
+
+        return response()->json(['message' => "All {$status} appointments cleared."]);
+    }
+
+    /**
+     * Backend Synchronize Label: Admin-Walkin-Validation-v2
+     * Store walk-in appointment with advanced validation and receipt data
+     */
+    public function storeWalkin(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Access Denied.'], 403);
+        }
+
+        $rules = [
+            'fullName' => 'required|string|regex:/^[A-Za-z\s.\-\']+$/|max:50',
+            'phone' => 'required|digits_between:10,11',
+            'email' => 'required|email',
+            'serviceType' => 'required|in:Regular Checkup,Dental Cleaning,Tooth Filling,Tooth Extraction,Teeth Whitening,Braces Consultation,Other',
+            'appointmentDate' => 'required|date|after_or_equal:today',
+            'preferredTime' => 'required|string',
+            'preferredDentist' => 'required|exists:users,email',
+            'medicalConditions' => 'nullable|array',
+            'others' => 'nullable|string',
+        ];
+
+        // Conditional Validation for "Other" service
+        if ($request->serviceType === 'Other') {
+            $rules['customService'] = 'required|string|min:3';
+        }
+
+        $validated = $request->validate($rules);
+
+        $appointment = Appointment::create([
+            'full_name' => $validated['fullName'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
+            'service_type' => $validated['serviceType'],
+            'custom_service' => $validated['customService'] ?? null,
+            'preferred_dentist' => $validated['preferredDentist'],
+            'appointment_date' => $validated['appointmentDate'],
+            'preferred_time' => $validated['preferredTime'],
+            'medical_conditions' => json_encode($validated['medicalConditions']),
+            'others' => $validated['others'],
+            'status' => 'confirmed',
+            'booked_by_admin' => true,
+        ]);
+
+        // 📧 Trigger the Email Notification
+        try {
+            Mail::to($appointment->email)->send(new WalkinReceiptMail($appointment));
+        } catch (\Exception $e) {
+            // Log error but don't stop the response; the appointment is still saved
+            \Log::error("Mail failed: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Walk-in registered and email sent!',
+            'data' => [
+                'id' => $appointment->id,
+                'fullName' => $appointment->full_name,
+                'serviceType' => $appointment->service_type,
+                'customService' => $appointment->custom_service,
+                'appointmentDate' => $appointment->appointment_date,
+                'preferredTime' => $appointment->preferred_time,
+                'preferredDentist' => $appointment->preferred_dentist,
+                'status' => $appointment->status
+            ]
+        ], 201);
+    }
+
+    /**
+     * 🛡️ THE JANITOR: Automatically expires pending appointments that are past due
+     */
+    private function autoExpireAppointments($dentistEmail = null)
+    {
+        $now = \Carbon\Carbon::now();
+        $today = $now->toDateString();
+        
+        // 🛡️ THE FIX: Match the '07:00 AM' format stored in your DB
+        $currentTime = $now->format('h:i A'); 
+
+        $query = Appointment::where('status', 'pending');
+
+        // If a dentist email is provided (Admin view), scope it to them
+        if ($dentistEmail) {
+            $query->where('preferred_dentist', $dentistEmail);
+        }
+
+        // THE FIX: Capture appointments BEFORE update so we can notify them
+        $toExpire = $query->where(function ($q) use ($today, $currentTime) {
+            $q->where('appointment_date', '<', $today) // Any date before today
+                  ->orWhere(function ($sub) use ($today, $currentTime) {
+                      $sub->where('appointment_date', $today)
+                          ->where('preferred_time', '<', $currentTime); // Today, but time passed
+                  });
+        })->get(); 
+
+        if ($toExpire->isNotEmpty()) {
+            // Perform mass update
+            Appointment::whereIn('id', $toExpire->pluck('id'))->update([
+                'status' => 'expired',
+                'updated_at' => now(),
+                'cancellation_reason' => 'Automatically expired: Appointment time has passed without clinic action.'
+            ]);
+
+            // 📧 Notify Patients
+            foreach ($toExpire as $appointment) {
+                try {
+                        \Illuminate\Support\Facades\Mail::to($appointment->email)
+                            ->send(new PatientNotificationMail($appointment, 'expired'));
+                } catch (\Exception $e) { \Log::error("Expire Mail failed: " . $e->getMessage()); }
+            }
+        }
+    }
+}

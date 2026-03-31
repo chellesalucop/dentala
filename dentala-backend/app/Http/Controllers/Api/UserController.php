@@ -1,0 +1,229 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Models\User;
+use App\Models\Appointment;
+
+class UserController extends Controller
+{
+    /**
+     * Unified Patients List: Groups by Full Name to separate dependents (like sons/daughters)
+     * even if they share the same account or email.
+     */
+    public function getAdminPatients(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Access Denied.'], 403);
+        }
+
+        /**
+         * LOGIC:
+         * We group by 'full_name' so "Josh" and "Marc" are separate records.
+         * We also include 'email' and 'user_id' in the group to maintain data integrity.
+         */
+        $patients = Appointment::where('preferred_dentist', $user->email)
+            ->select('full_name as username', 'email', 'phone', 'user_id')
+            ->selectRaw('count(*) as appointments_count')
+            ->groupBy('full_name', 'email', 'phone', 'user_id')
+            ->orderBy('full_name', 'asc')
+            ->get()
+            ->map(function($appt) {
+                // If there is a user_id, let's try to get their profile picture
+                $registeredAccount = $appt->user_id ? User::find($appt->user_id) : null;
+                
+                // All patients without accounts are now considered guests/dependents
+                $isDependent = !$registeredAccount;
+
+                return [
+                    // THE FIX: Add phone/email to hash to ensure uniqueness for same names
+                    'id' => $appt->user_id 
+                            ? $appt->user_id . '-' . md5($appt->username . $appt->phone . $appt->email)
+                            : 'guest-' . md5($appt->username . $appt->phone . $appt->email),
+                    'real_user_id' => $appt->user_id,
+                    'username' => $appt->username, // This is the Patient's Name
+                    'email' => $appt->email,
+                    'phone' => $appt->phone,
+                    'profile_photo_path' => ($registeredAccount && !$isDependent) ? $registeredAccount->profile_photo_path : null,
+                    'appointments_count' => $appt->appointments_count,
+                    'is_guest' => $isDependent
+                ];
+            });
+
+        return response()->json($patients);
+    }
+
+    /**
+     * Get Patient Appointment History with Full Medical Details
+     * Used for AdminPatientsPage.jsx history modal
+     */
+    public function getPatientHistory(Request $request, $userId)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Access Denied.'], 403);
+        }
+
+        // 🛡️ MEDICAL HISTORY: Include all fields for comprehensive patient history
+        $appointments = Appointment::where('preferred_dentist', $user->email)
+            ->where(function($query) use ($userId) {
+                // Handle both registered users and guests/dependents
+                $query->where('user_id', $userId)
+                      ->orWhere('email', function($subQuery) use ($userId) {
+                          // If userId is a guest format, find by email
+                          if (str_contains($userId, 'guest-')) {
+                              $guestEmail = Appointment::where('id', str_replace('guest-', '', $userId))
+                                  ->value('email');
+                              if ($guestEmail) {
+                                  $subQuery->where('email', $guestEmail);
+                              }
+                          }
+                      });
+            })
+            // 🛡️ THE FIX: Include all historical statuses (declined, no-show) in patient history
+            ->whereIn('status', ['completed', 'cancelled', 'declined', 'no-show', 'skipped'])
+            ->orderBy('appointment_date', 'desc')
+            ->get([
+                'id', 'user_id', 'full_name', 'phone', 'email', 
+                'service_type', 'custom_service', 'preferred_dentist',
+                'medical_conditions', 'others', 'appointment_date', 
+                'preferred_time', 'status', 'cancellation_reason'
+            ]);
+
+        return response()->json($appointments);
+    }
+
+    /**
+     * Update user profile picture
+     */
+    public function updateProfilePicture(Request $request)
+    {
+        $request->validate([
+            'image' => [
+                'required',
+                'image',
+                'mimes:jpeg,png,jpg,gif',
+                'max:2048' // This is 2048 KB (2MB)
+            ]
+        ], [
+            // Custom helpful messages from the server
+            'image.max' => 'Image upload exceeded 2MB limit.',
+            'image.mimes' => 'Please use a valid image format (JPEG, PNG, GIF).',
+            'image.required' => 'Please select an image to upload.',
+            'image.image' => 'The file must be a valid image.',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->profile_photo_path) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        $path = $request->file('image')->store('profile-photos', 'public');
+
+        $user->profile_photo_path = $path;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile picture updated successfully!',
+            'user' => $user,
+            'url' => asset('storage/' . $path)
+        ], 200);
+    }
+
+    /**
+     * Fetch all registered dentists with full data
+     */
+    public function getDentists()
+    {
+        try {
+            // 🛡️ FULL-DATA FETCH: Include email field for frontend selection logic
+            $dentists = User::where('role', 'admin')
+                            ->select('id', 'name', 'email') 
+                            ->get();
+
+            return response()->json(['dentists' => $dentists], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update profile information
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                // Ensure email is unique but ignore this user
+                'unique:users,email,' . $user->id, 
+                'regex:/^[a-z0-9._%+-]+@(gmail\.com|yahoo\.com|tip\.edu\.ph)$/i'
+            ],
+            'phone' => [
+                'required',
+                'digits:11', // 
+                'unique:users,phone,' . $user->id,
+                'regex:/^09[0-9]{9}$/' // 
+            ],
+        ], [
+            'phone.digits' => 'Phone number must be exactly 11 digits.',
+            'phone.regex' => 'Please use a valid Philippine mobile format (09XXXXXXXXX).',
+            'email.regex' => 'Please use a valid email (Gmail, Yahoo, or TIP only).',
+        ]);
+
+        $user->update([
+            'email' => $request->email,
+            'phone' => $request->phone,
+        ]);
+
+        return response()->json(['message' => 'Profile updated!', 'user' => $user], 200);
+    }
+
+    /**
+     * Change password
+     */
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
+        // 'bail' stops at the first failure. 
+        // We also separate the 'confirmed' check to prioritize it.
+        $request->validate([
+            'current_password' => 'required|bail',
+            'password' => 'required|min:8|confirmed',
+        ], [
+            'current_password.required' => 'The current password field is required.',
+            'password.confirmed' => 'The password confirmation does not match.',
+            'password.min' => 'Your new password must be at least 8 characters.',
+        ]);
+
+        // THE CHALLENGE: Verify the old password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'The current password you entered is incorrect.'
+            ], 422);
+        }
+
+        // SUCCESS: Update to the new hashed password
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated successfully!'
+        ], 200);
+    }
+}

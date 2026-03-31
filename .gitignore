@@ -1,0 +1,9 @@
+dentala-backend/vendor/
+dentala-backend/.env
+
+dentala-frontend/node_modules/
+dentala-frontend/dist/
+
+.env
+.DS_Store
+*.log
