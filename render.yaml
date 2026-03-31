@@ -5,7 +5,7 @@ services:
     env: docker
     repo: https://github.com/chellesalucop/dentala.git
     rootDir: .
-    dockerfilePath: ./dentala-backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
     region: oregon
