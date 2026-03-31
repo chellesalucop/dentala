@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../api';
 import { CheckCircle, XCircle, Calendar, X, AlertTriangle } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -29,7 +30,7 @@ export default function AdminDashboardPage() {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://127.0.0.1:8000/api/admin/dashboard-stats', {
+      const response = await fetch(`${API_URL}/api/admin/dashboard-stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -78,7 +79,7 @@ export default function AdminDashboardPage() {
   const handleUpdateStatus = async (id, newStatus, reason = '') => {
     const token = localStorage.getItem('auth_token');
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/admin/appointments/${id}/status`, {
+      const response = await fetch(`${API_URL}/api/admin/appointments/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

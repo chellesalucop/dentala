@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../api';
 import { Search, CheckCircle, XCircle, CheckSquare, X, Calendar, User, Mail, Phone, RotateCw, Info, Plus, UserPlus, Clock } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -143,7 +144,7 @@ export default function AdminAppointmentsPage() {
   const fetchAppointments = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://127.0.0.1:8000/api/admin/appointments', {
+      const response = await fetch(`${API_URL}/api/admin/appointments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -186,7 +187,7 @@ export default function AdminAppointmentsPage() {
 
   const token = localStorage.getItem('auth_token');
   try {
-    const response = await fetch(`http://127.0.0.1:8000/api/admin/appointments/${id}/status`, {
+    const response = await fetch(`${API_URL}/api/admin/appointments/${id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -348,7 +349,7 @@ export default function AdminAppointmentsPage() {
     
     const token = localStorage.getItem('auth_token');
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/admin/appointments/walk-in', {
+      const response = await fetch(`${API_URL}/api/admin/appointments/walk-in`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
