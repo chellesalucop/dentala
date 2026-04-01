@@ -99,10 +99,32 @@ function AppContent() {
   const closeModal = () => setActiveModal(null);
 
   const modalData = {
-    about: "Dentala is a premier dental clinic...",
-    faqs: "Q: Do you accept walk-ins?...",
-    privacy: "Your privacy is our priority...",
-    terms: "By booking an appointment..."
+    about: "Dentala: Your Smile, Simplified. We combine expert dental care with a seamless digital platform to help you manage your oral health with ease. Dedicated to excellence, one patient at a time. Dentala is an online dental appointment system where patients can book dental services, and Dentists can manage their patients information and appointments all in one web application.",
+    faqs: `1. What is Dentala?
+Dentala is a web app for managing dental appointments and patient records in a simple and efficient way.
+
+2. What can Dentala do?
+Dentala allows clients to book appointments through the web app, and dentists can review, approve, or manage those appointment requests to ensure proper scheduling.
+
+3. What information does the web app collect?
+Dentala collects basic patient details such as name, contact information, appointment schedules, and dental records.
+
+4. Is my data safe in the web app?
+Yes. Dentala uses secure login and access control to protect user and patient information.
+
+5. Does the web app share my information?
+No. Your data is not shared with third parties unless required by law or with your consent.
+
+6. Can I update my information?
+Yes. Authorized users can access and update records when needed.`,
+    privacy: `Dentala is an online application that aims to provide an efficient clinic service while ensuring the privacy of its users. The information we collect from our users is limited to what is required to provide the best clinic services. This includes patient names, contact information, appointment schedules, and dental records.
+
+The information we collect is stored securely within the system, but only authorized personnel such as clinic staff and dentists can access the information. We also ensure the security of the information by implementing security measures such as authentication.
+
+We do not disclose personal information and dental records to third parties except when required by law. The information we collect from the user is used to provide the best clinic services.
+
+The user also has the right to access, edit, or request the deletion of personal information depending on the clinic's policy. By accessing the Dentala web application, the user agrees to the collection and use of the information provided for the stated purposes.`,
+    terms: "By booking an appointment with Dentala, you agree to our terms of service including appointment policies, cancellation terms, and data usage guidelines."
   };
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password';
