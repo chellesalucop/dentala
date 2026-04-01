@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { API_URL } from '../api';
 import { Camera, User as UserIcon } from 'lucide-react';
 
 
