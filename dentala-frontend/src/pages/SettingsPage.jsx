@@ -371,7 +371,7 @@ export default function SettingsPage() {
 
     try {
 
-      const response = await fetch(`${BASE_URL}/api/user/profile-picture`, {
+      const response = await fetch(`${API_URL}/api/user/profile-picture`, {
 
         method: 'POST',
 
@@ -397,7 +397,7 @@ export default function SettingsPage() {
 
         // 2. Set the preview to the actual storage URL from the server
 
-        setPreview(`${BASE_URL}/storage/${data.user.profile_photo_path}`);
+        setPreview(`${API_URL}/storage/${data.user.profile_photo_path}`);
 
        
 
