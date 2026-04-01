@@ -289,8 +289,8 @@ Do not use the platform for anything that is unlawful.`
           <div>
             <h3 className="font-bold text-lg mb-4 text-black underline decoration-dentalBlue">Social</h3>
             <div className="flex items-center gap-4">
-               <a href="#" className="hover:scale-110 transition"><img src="/images/facebook.png" alt="FB" className="w-6 h-6" /></a>
-               <a href="#" className="hover:scale-110 transition"><img src="/images/instagram.png" alt="IG" className="w-6 h-6" /></a>
+               <a href="https://www.facebook.com/profile.php?id=61576479103227" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition"><img src="/images/facebook.png" alt="FB" className="w-6 h-6" /></a>
+               <a href="https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2Fdentalawebapp%2F%3Ffbclid%3DIwZXh0bgNhZW0CMTAAYnJpZBExRmR6ZzZhUEZFQzdJczlQZHNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR6k3306bleBiSPPFs9GOXSL9-KxzH5uVY8WrHlh1lmD-u-6-DzaDvD3Cfnvmg_aem_v5_Gx-FuztNfRqct0nyO3g&h=AT6l_SLB8v9v4TygD6SJgz4X_gYg3pguF5sjINBJwBsuyjruWPlkvWnozvAmcdE41p_H3XcADB4GmsOc53lhm5RsIaboF_EvQMmeblYZuPGy9FOXsvON882gm48ELpAgef7Iig" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition"><img src="/images/instagram.png" alt="IG" className="w-6 h-6" /></a>
             </div>
           </div>
         </footer>
