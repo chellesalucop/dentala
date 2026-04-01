@@ -124,7 +124,34 @@ The information we collect is stored securely within the system, but only author
 We do not disclose personal information and dental records to third parties except when required by law. The information we collect from the user is used to provide the best clinic services.
 
 The user also has the right to access, edit, or request the deletion of personal information depending on the clinic's policy. By accessing the Dentala web application, the user agrees to the collection and use of the information provided for the stated purposes.`,
-    terms: "By booking an appointment with Dentala, you agree to our terms of service including appointment policies, cancellation terms, and data usage guidelines."
+    terms: `Terms and Conditions
+
+When you use our web application, you agree with the following rules. Please take your time to read them carefully.
+
+1. Acceptance of Terms
+When you create an account or use Dentala, you agree to follow Terms and Conditions, as well as our Privacy Policy. If you do not agree, you may not use our service.
+
+2. Description of Service
+Dentala provides an online platform that:
+Patients can look through the different dental services we offer and book an appointment that fits their schedule.
+Allows Dentists to manage schedules, approve appointments, and maintain patient records.
+
+3. User Accounts
+When you sign up, you agree to provide your email address. You are held responsible for maintaining the confidentiality of your own credentials. Dentala will not be held accountable for unauthorized access resulting from insecure credential management.
+
+4. Appointment Booking
+When you make an appointment request through the web application, it does not automatically result in a successful appointment. You have to wait for the dentist or clinic to officially approve it first. An email will be sent notifying you for appointment confirmation.
+
+5. Use of Data & Privacy
+When you use Dentala, you agree to follow our Privacy Policy. We collect and store the following information:
+Contact information and dental records.
+Appointment history. Access to this data is restricted to authorized clinic personnel (dentists and staff) to ensure professional care and scheduling efficiency.
+
+6. Prohibited Conduct
+Users agree not to:
+Submit false or misleading medical information.
+Attempt to bypass the app's security measures.
+Do not use the platform for anything that is unlawful.`
   };
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password';
