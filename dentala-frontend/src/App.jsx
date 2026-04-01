@@ -298,12 +298,14 @@ Do not use the platform for anything that is unlawful.`
 
       {activeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity px-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 relative animate-fade-in-up">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] p-8 relative animate-fade-in-up flex flex-col">
             <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full p-1 transition border-none bg-transparent cursor-pointer">
               <X size={24} />
             </button>
             <h2 className="text-2xl font-bold mb-4 text-dentalBlue border-b pb-2 text-left">{activeModal.title}</h2>
-            <p className="text-gray-700 whitespace-pre-line leading-relaxed text-left">{activeModal.content}</p>
+            <div className="flex-1 overflow-y-auto pr-2 text-gray-700 whitespace-pre-line leading-relaxed text-left">
+              {activeModal.content}
+            </div>
             <div className="mt-8 text-right">
               <button onClick={closeModal} className="bg-gray-200 text-gray-800 font-semibold py-2 px-6 rounded hover:bg-gray-300 transition border-none cursor-pointer">Close</button>
             </div>
