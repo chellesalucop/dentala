@@ -55,7 +55,7 @@ function AppContent() {
 
   const userString = localStorage.getItem('user');
   let userObj = userString ? JSON.parse(userString) : null;
-  let displayName = userObj?.username || 'User'; 
+  let displayName = userObj?.email || 'User'; 
   let userRole = userObj?.role || 'patient';
   let profilePhoto = userObj?.profile_photo_path 
     ? `http://127.0.0.1:8000/storage/${userObj.profile_photo_path}` 
@@ -141,22 +141,12 @@ function AppContent() {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-3 font-semibold bg-transparent border-none cursor-pointer hover:opacity-90 transition-all p-0"
               >
-                <span className="hidden md:inline">Hi, {displayName}!</span>
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black bg-white flex items-center justify-center shadow-sm">
-                  {profilePhoto ? (
-                    <img src={profilePhoto} className="w-full h-full object-cover" alt="Profile" />
-                  ) : (
-                    <UserIcon size={20} className="text-gray-400" />
-                  )}
-                </div>
+                <span className="hidden md:inline">{displayName}</span>
               </button>
 
             {isDropdownOpen && (
               <div className="absolute right-0 mt-3 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-up">
                 <div className="px-4 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 bg-white">
-                    {profilePhoto ? <img src={profilePhoto} className="w-full h-full object-cover" /> : <UserIcon size={16} className="m-auto mt-2 text-gray-300" />}
-                  </div>
                   <div className="text-left overflow-hidden">
                     <p className="font-bold text-gray-900 truncate mb-0 leading-tight">{displayName}</p>
                     <p className="text-[10px] uppercase font-bold text-dentalBlue tracking-wider">{userRole}</p>
