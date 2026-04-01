@@ -66,7 +66,7 @@ export default function SettingsPage() {
 
       if (user.profile_photo_path) {
 
-        setPreview(`${BASE_URL}/storage/${user.profile_photo_path}`);
+        setPreview(`${API_URL}/storage/${user.profile_photo_path}`);
 
       }
 
@@ -149,7 +149,7 @@ export default function SettingsPage() {
 
     try {
 
-      const response = await fetch(`${BASE_URL}/api/user/profile`, {
+      const response = await fetch(`${API_URL}/api/user/profile`, {
 
         method: 'PUT',
 
@@ -211,7 +211,7 @@ export default function SettingsPage() {
 
     try {
 
-      const response = await fetch(`${BASE_URL}/api/user/password`, {
+      const response = await fetch(`${API_URL}/api/user/password`, {
 
         method: 'PUT',
 
