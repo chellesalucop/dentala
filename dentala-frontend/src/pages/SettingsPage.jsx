@@ -359,7 +359,7 @@ export default function SettingsPage() {
 
     setUploading(true);
 
-    setPreview(URL.createObjectURL(file));
+    // Don't set preview to objectURL during upload, let server response set it
 
 
 
