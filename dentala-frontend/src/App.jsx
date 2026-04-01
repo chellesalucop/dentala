@@ -191,6 +191,13 @@ Do not use the platform for anything that is unlawful.`
                 className="flex items-center gap-3 font-semibold bg-transparent border-none cursor-pointer hover:opacity-90 transition-all p-0"
               >
                 <span className="hidden md:inline">{displayName}</span>
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black bg-white flex items-center justify-center shadow-sm">
+                  {profilePhoto ? (
+                    <img src={profilePhoto} className="w-full h-full object-cover" alt="Profile" />
+                  ) : (
+                    <UserIcon size={20} className="text-gray-400" />
+                  )}
+                </div>
               </button>
 
             {isDropdownOpen && (
