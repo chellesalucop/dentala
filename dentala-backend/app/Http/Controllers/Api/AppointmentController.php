@@ -188,7 +188,7 @@ class AppointmentController extends Controller
         // 🛡️ ADMIN STRENGTH: Include all fields for comprehensive appointment management
         // 🔄 CHRONOLOGICAL QUEUE: Two-tier sorting for admin workflow
         // 📅 NEWEST FIRST: Include created_at for booking sequence
-        $appointments = Appointment::where('preferred_dentist', $user->email)
+        $appointments = Appointment::whereRaw('LOWER(preferred_dentist) = ?', [strtolower($user->email)])
             ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
             ->orderBy('appointment_date', 'asc')
             ->orderBy('preferred_time', 'asc')
@@ -230,26 +230,27 @@ class AppointmentController extends Controller
         ];
 
         // 1. Fetch Today's Schedule (Only Confirmed or Completed for today)
-        $todaysSchedule = Appointment::where('preferred_dentist', $user->email)
+        $todaysSchedule = Appointment::whereRaw('LOWER(preferred_dentist) = ?', [strtolower($user->email)])
             ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
             ->where('appointment_date', $today)
             ->whereIn('status', ['confirmed', 'completed'])
-            // 🛡️ THE FIX: Convert '07:00 AM' strings to actual time values for chronological sorting
-            ->orderByRaw("STR_TO_DATE(preferred_time, '%h:%i %p') ASC") 
+            // 🛡️ THE POSTGRES FIX: Use to_timestamp for AM/PM sorting in PostgreSQL
+            ->orderByRaw("to_timestamp(preferred_time, 'HH12:MI AM') ASC") 
             ->get($selectFields)
             ->map(function ($appointment) {
                 // 🛡️ DASHBOARD STATS STRING SANITIZATION: Truncate long strings
-                $appointment->full_name = Str::limit($appointment->full_name, 30);
-                $appointment->service_type = Str::limit($appointment->service_type, 25);
-                $appointment->custom_service = $appointment->custom_service ? Str::limit($appointment->custom_service, 25) : null;
+                $appointment->full_name = \Illuminate\Support\Str::limit($appointment->full_name, 30);
+                $appointment->service_type = \Illuminate\Support\Str::limit($appointment->service_type, 25);
+                $appointment->custom_service = $appointment->custom_service ? \Illuminate\Support\Str::limit($appointment->custom_service, 25) : null;
                 return $appointment;
             });
 
         // 2. Fetch Pending Approvals (Regardless of date)
-        $pendingApprovals = Appointment::where('preferred_dentist', $user->email)
+        $pendingApprovals = Appointment::whereRaw('LOWER(preferred_dentist) = ?', [strtolower($user->email)])
             ->leftJoin('users', 'appointments.user_id', '=', 'users.id')
             ->where('status', 'pending')
             ->orderBy('appointment_date', 'asc')
+
             ->get($selectFields)
             ->map(function ($appointment) {
                 // 🛡️ DASHBOARD STATS STRING SANITIZATION: Truncate long strings
@@ -261,7 +262,7 @@ class AppointmentController extends Controller
 
         // 3. Fetch Skipped Appointments for No-Show Analytics
         // 🛡️ NO-SHOW TRACKING: Monitor patient attendance patterns
-        $skippedAppointments = Appointment::where('preferred_dentist', $user->email)
+        $skippedAppointments = Appointment::whereRaw('LOWER(preferred_dentist) = ?', [strtolower($user->email)])
             ->where('status', 'skipped')
             ->orderBy('appointment_date', 'desc')
             ->limit(10) // Show recent 10 skipped appointments
@@ -304,7 +305,7 @@ class AppointmentController extends Controller
         ]);
 
         $appointment = Appointment::where('id', $id)
-            ->where('preferred_dentist', $user->email)
+            ->whereRaw('LOWER(preferred_dentist) = ?', [strtolower($user->email)])
             ->firstOrFail();
 
         $appointment->status = $request->status;
@@ -526,7 +527,7 @@ class AppointmentController extends Controller
 
         // If a dentist email is provided (Admin view), scope it to them
         if ($dentistEmail) {
-            $query->where('preferred_dentist', $dentistEmail);
+            $query->whereRaw('LOWER(preferred_dentist) = ?', [strtolower($dentistEmail)]);
         }
 
         // THE FIX: Capture appointments BEFORE update so we can notify them
