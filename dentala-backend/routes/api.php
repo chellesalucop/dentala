@@ -27,9 +27,15 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/reset-password-otp', [AuthController::class, 'resetPasswordWithOtp']);
 Route::get('/reminders/send', [AppointmentController::class, 'sendReminders']);
 Route::get('/run-migrations', function() {
-    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    return "Migrations executed successfully!";
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return "<h1>Migration Report</h1><pre>" . $output . "</pre><p>If it says 'Nothing to migrate', your DB is already updated.</p>";
+    } catch (\Exception $e) {
+        return "<h1>Error</h1><pre>" . $e->getMessage() . "</pre>";
+    }
 });
+
 
 
 
