@@ -165,29 +165,34 @@ export default function AdminDashboardPage() {
           <div className="space-y-4">
             {todaysSchedule.length === 0 ? <p className="text-gray-400 italic py-10 text-center">No appointments today.</p> : 
               todaysSchedule.map(appt => (
-                <div key={appt.id} className={`bg-gray-50 p-4 rounded-xl border border-transparent min-w-0 ${appt.status === 'expired' ? 'bg-gray-200 opacity-50' : ''}`}>
-                  <div className="flex justify-between items-start">
-                    {/* 🛡️ Added break-all and line-clamp to prevent stretching */}
-                    <p className="font-bold break-all line-clamp-1 text-black">{appt.full_name}</p>
-                    {/* 🛡️ SYNC: Use the updated_at field we added to the backend select array */}
-                    <span className="text-[10px] font-bold italic text-gray-400 whitespace-nowrap ml-2">
-                      {appt.status === 'confirmed' ? 'Confirmed: ' : 
-                       appt.status === 'completed' ? 'Completed: ' : 
-                       appt.status === 'expired' ? 'Expired: ' : 'Syncing...'}
-                      
-                      <span className={appt.status === 'expired' ? 'text-black font-black' : ''}>
-                        {appt.updated_at ? new Date(appt.updated_at).toLocaleDateString() : 'Pending'}
-                      </span>
+                <div key={appt.id} className={`p-4 rounded-xl border transition-all ${
+                  appt.status === 'expired' 
+                    ? 'bg-gray-100 border-gray-200 opacity-60' 
+                    : 'bg-white border-blue-100 shadow-sm hover:shadow-md'
+                }`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-bold text-gray-900 truncate pr-2">{appt.full_name}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${
+                      appt.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
+                      appt.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {appt.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 truncate">
-                    {appt.service_type === 'Other' ? `Other (${appt.custom_service || 'No details'})` : appt.service_type}
-                    <span className="mx-1">•</span> 
-                    <span className="font-black text-gray-700">{appt.preferred_time}</span>
-                  </p>
+                  
+                  <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="font-black text-gray-700">{appt.preferred_time}</span>
+                    </div>
+                    <div className="flex items-center gap-1 uppercase tracking-widest text-[9px]">
+                      {appt.service_type === 'Other' ? (appt.custom_service || 'Other') : appt.service_type}
+                    </div>
+                  </div>
                 </div>
               ))
             }
+
           </div>
         </div>
 
