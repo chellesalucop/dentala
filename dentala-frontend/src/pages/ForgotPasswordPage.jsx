@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/send-otp', {
+      const response = await fetch(`${API_URL}/api/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/verify-otp', {
+      const response = await fetch(`${API_URL}/api/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/resend-otp', {
+      const response = await fetch(`${API_URL}/api/resend-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -212,7 +212,7 @@ export default function ForgotPasswordPage() {
     try {
       // ❌ WRONG: fetch('http://127.0.0.1:8000/api/change-password', ...)
       // ✅ CORRECT: Must match your api.php route name
-      const response = await fetch('http://127.0.0.1:8000/api/reset-password-otp', {
+      const response = await fetch(`${API_URL}/api/reset-password-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -316,7 +316,7 @@ const sortedAppointments = appointments
     if (window.confirm('Are you sure you want to delete this appointment record?')) {
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch(`http://127.0.0.1:8000/api/appointments/${id}`, {
+        const response = await fetch(`${API_URL}/api/appointments/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
