@@ -102,14 +102,19 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::create($validated);
 
-        // 📧 Notify Admin & Patient
-        try {
-            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            // 📧 Notify Admin & Patient
+            try {
+                $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+                $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-            Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
-            Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
-        } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
+                // 🛡️ TESTING SAFEGUARD: Only send Admin mail if email is different from patient
+                // This prevents "Double Emails" during developer testing.
+                if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
+                    Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+                }
+                
+                Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+            } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
 

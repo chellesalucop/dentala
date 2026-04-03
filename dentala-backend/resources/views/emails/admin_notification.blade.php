@@ -15,11 +15,15 @@
             background-color: #f8f9fa;
         }
         .header {
-            background-color: #007bff;
+            background-color: #0162e0;
             color: white;
             padding: 20px;
             text-align: center;
             border-radius: 8px 8px 0 0;
+        }
+        .header img {
+            max-height: 60px;
+            margin-bottom: 5px;
         }
         .content {
             background-color: white;
@@ -34,15 +38,18 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 5px;
         }
         .detail-label {
             font-weight: bold;
             color: #666;
-            min-width: 120px;
+            min-width: 130px;
         }
         .detail-value {
             color: #333;
             flex: 1;
+            text-align: right;
         }
         .status-badge {
             display: inline-block;
@@ -69,15 +76,12 @@
 </head>
 <body>
     <div class="header">
+        <img src="{{ asset('images/logo.png') }}" alt="Dentala Logo">
         <h1>Appointment Update</h1>
     </div>
     
     <div class="content">
         <div class="appointment-details">
-            <div class="detail-row">
-                <span class="detail-label">Patient:</span>
-                <span class="detail-value">{{ $appointment->full_name }}</span>
-            </div>
             <div class="detail-row">
                 <span class="detail-label">Status:</span>
                 <span class="detail-value">
@@ -87,15 +91,19 @@
                 </span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Date:</span>
+                <span class="detail-label">Appointment Date:</span>
                 <span class="detail-value">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y') }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Time:</span>
+                <span class="detail-label">Preferred Time:</span>
                 <span class="detail-value">{{ $appointment->preferred_time }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Service:</span>
+                <span class="detail-label">Patient Name:</span>
+                <span class="detail-value">{{ $appointment->full_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Service Type:</span>
                 <span class="detail-value">{{ $appointment->service_type }}</span>
             </div>
             @if($appointment->custom_service)

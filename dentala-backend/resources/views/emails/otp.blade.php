@@ -15,7 +15,7 @@
             background-color: #f8f9fa;
         }
         .header {
-            background-color: #007bff;
+            background-color: #0162e0;
             color: white;
             padding: 15px;
             text-align: center;
@@ -34,7 +34,7 @@
         }
         .otp-box {
             background-color: #f1f8ff;
-            border: 2px dashed #007bff;
+            border: 2px dashed #0162e0;
             padding: 20px;
             margin: 20px 0;
             border-radius: 8px;
@@ -42,7 +42,7 @@
         .otp-code {
             font-size: 32px;
             font-weight: bold;
-            color: #007bff;
+            color: #0162e0;
             letter-spacing: 5px;
         }
         .footer {
