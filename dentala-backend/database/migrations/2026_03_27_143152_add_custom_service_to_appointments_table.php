@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('appointments', function (Blueprint $table) {
-            $table->string('custom_service')->nullable()->after('service_type');
-        });
+        if (!Schema::hasColumn('appointments', 'custom_service')) {
+            Schema::table('appointments', function (Blueprint $table) {
+                $table->string('custom_service')->nullable()->after('service_type');
+            });
+        }
     }
+
 
     /**
      * Reverse the migrations.

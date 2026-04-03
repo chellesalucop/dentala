@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 🛡️ GHOST RECORD: Add soft deletes for audit integrity and recovery
-        Schema::table('appointments', function (Blueprint $table) {
-            $table->softDeletes(); // Adds the 'deleted_at' column
-        });
+        if (!Schema::hasColumn('appointments', 'deleted_at')) {
+            Schema::table('appointments', function (Blueprint $table) {
+                $table->softDeletes(); 
+            });
+        }
     }
+
 
     /**
      * Reverse the migrations.

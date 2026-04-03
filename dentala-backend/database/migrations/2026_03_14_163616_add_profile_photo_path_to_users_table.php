@@ -10,12 +10,15 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    Schema::table('users', function (Blueprint $table) {
-        // We add the column as nullable so existing users don't break
-        $table->string('profile_photo_path', 2048)->nullable()->after('phone');
-    });
-}
+    {
+        if (!Schema::hasColumn('users', 'profile_photo_path')) {
+            Schema::table('users', function (Blueprint $table) {
+                // We add the column as nullable so existing users don't break
+                $table->string('profile_photo_path', 2048)->nullable()->after('phone');
+            });
+        }
+    }
+
 
 public function down()
 {
