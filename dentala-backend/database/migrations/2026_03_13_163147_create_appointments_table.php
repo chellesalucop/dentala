@@ -11,33 +11,38 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('appointments', function (Blueprint $table) {
-            $table->id();
-            // Link to the user who booked it (nullable in case you allow guest bookings later)
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            
-            // Personal Info
-            $table->string('full_name');
-            $table->string('phone');
-            $table->string('email');
-            
-            // Appointment Info
-            $table->string('service_type');
-            $table->string('preferred_dentist');
-            
-            // Medical Conditions (Stored as JSON array since they can select multiple)
-            $table->json('medical_conditions')->nullable();
-            $table->string('others')->nullable();
-            
-            // Schedule Info
-            $table->date('appointment_date');
-            $table->string('preferred_time');
-            
-            // Tracking status (upcoming, completed, cancelled)
-            $table->string('status')->default('upcoming');
-            
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('appointments')) {
+            Schema::create('appointments', function (Blueprint $table) {
+                $table->id();
+                // Link to the user who booked it (nullable in case you allow guest bookings later)
+                $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+                
+                // Personal Info
+                $table->string('full_name');
+                $table->string('phone');
+                $table->string('email');
+                
+                // Appointment Info
+                $table->string('service_type');
+                $table->string('preferred_dentist');
+                
+                // Medical Conditions (Stored as JSON array since they can select multiple)
+                $table->json('medical_conditions')->nullable();
+                $table->string('others')->nullable();
+                
+                // Schedule Info
+                $table->date('appointment_date');
+                $table->string('preferred_time');
+                
+                // Status Management
+                $table->string('status')->default('pending');
+                
+                // Cancellation and rejection management
+                $table->string('cancellation_reason')->nullable();
+                
+                $table->timestamps();
+            });
+        }
     }
 
     /**
