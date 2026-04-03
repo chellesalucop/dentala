@@ -11,15 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('password_resets', function (Blueprint $table) {
-            $table->string('email')->index();
-            $table->string('token');
-            $table->string('verification_token')->nullable();
-            $table->timestamp('expires_at')->nullable();
-            $table->timestamp('verified_at')->nullable();
-            $table->timestamps(); // This adds created_at and updated_at
-        });
+        if (!Schema::hasTable('password_resets')) {
+            Schema::create('password_resets', function (Blueprint $table) {
+                $table->string('email')->index();
+                $table->string('token');
+                $table->string('verification_token')->nullable();
+                $table->timestamp('expires_at')->nullable();
+                $table->timestamp('verified_at')->nullable();
+                $table->timestamps(); 
+            });
+        }
     }
+
 
     /**
      * Reverse the migrations.
