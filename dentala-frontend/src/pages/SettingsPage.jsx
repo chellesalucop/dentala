@@ -110,8 +110,14 @@ export default function SettingsPage() {
         window.location.reload(); // Refresh to sync everywhere
       } else if (data.errors) {
         setErrors(data.errors);
+      } else {
+        alert("Server Error: " + (data.message || "Failed to save profile. Please check if your database is up to date via the /api/run-migrations URL."));
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+      alert("Connection Error: Could not reach the server.");
+    }
+
   };
 
   const handlePasswordUpdate = async (e) => {
