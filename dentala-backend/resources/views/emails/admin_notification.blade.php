@@ -104,12 +104,24 @@
                     <span class="detail-value">{{ $appointment->custom_service }}</span>
                 </div>
             @endif
-            @if($appointment->cancellation_reason)
+            @if($appointment->hmo_provider && $appointment->hmo_provider !== 'None')
                 <div class="detail-row">
-                    <span class="detail-label">Reason:</span>
-                    <span class="detail-value">{{ $appointment->cancellation_reason }}</span>
+                    <span class="detail-label">HMO Provider:</span>
+                    <span class="detail-value" style="color: #0162e0; font-weight: bold;">{{ $appointment->hmo_provider }}</span>
                 </div>
+                @if($appointment->hmo_card_path)
+                    <div style="margin-top: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fff;">
+                        <p style="font-size: 11px; color: #888; margin-top: 0; margin-bottom: 5px; font-weight: bold; text-transform: uppercase;">HMO Card Preview:</p>
+                        <img src="{{ $appointment->hmo_card_path }}" style="max-width: 100%; border-radius: 4px; border: 1px solid #eee;" alt="HMO Card">
+                    </div>
+                @endif
             @endif
+             @if($appointment->cancellation_reason)
+                 <div class="detail-row">
+                     <span class="detail-label">Reason:</span>
+                     <span class="detail-value">{{ $appointment->cancellation_reason }}</span>
+                 </div>
+             @endif
         </div>
     </div>
     

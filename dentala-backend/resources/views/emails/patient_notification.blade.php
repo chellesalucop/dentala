@@ -116,6 +116,12 @@
                 <span class="detail-label">Service Type:</span>
                 <span class="detail-value">{{ $appointment->service_type }} {{ $appointment->custom_service ? "({$appointment->custom_service})" : "" }}</span>
             </div>
+            @if($appointment->hmo_provider && $appointment->hmo_provider !== 'None')
+                <div class="detail-row">
+                    <span class="detail-label">HMO Provider:</span>
+                    <span class="detail-value" style="color: #0162e0; font-weight: bold;">{{ $appointment->hmo_provider }}</span>
+                </div>
+            @endif
             <div class="detail-row">
                 <span class="detail-label">Appointment Date:</span>
                 <span class="detail-value">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y') }}</span>
