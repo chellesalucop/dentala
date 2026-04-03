@@ -112,7 +112,7 @@ export default function AdminAppointmentsPage() {
       if (!walkinData.appointmentDate) return;
       try {
         const token = localStorage.getItem('auth_token');
-        const response = await fetch(`http://127.0.0.1:8000/api/appointments/check-slots?date=${walkinData.appointmentDate}`, {
+        const response = await fetch(`${API_URL}/api/appointments/check-slots?date=${walkinData.appointmentDate}`, {
           headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
         });
         const data = await response.json();
@@ -126,7 +126,7 @@ export default function AdminAppointmentsPage() {
   const fetchDentists = async () => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://127.0.0.1:8000/api/dentists', {
+      const response = await fetch(`${API_URL}/api/dentists`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
