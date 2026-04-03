@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your OTP Code - Dentala Clinic (TIP Support)</title>
+    <title>Password Reset OTP</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             max-width: 600px;
@@ -14,121 +14,66 @@
             padding: 20px;
             background-color: #f8f9fa;
         }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
         .header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #1e40af;
-            padding-bottom: 20px;
+            border-radius: 8px 8px 0 0;
         }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1e40af;
+        .header img {
+            max-height: 50px;
             margin-bottom: 10px;
         }
-        .subheader {
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .otp-container {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
+        .content {
+            background-color: white;
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             text-align: center;
-            margin: 25px 0;
+        }
+        .otp-box {
+            background-color: #f1f8ff;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
         }
         .otp-code {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: bold;
-            letter-spacing: 8px;
-            margin: 15px 0;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-        }
-        .instructions {
-            background-color: #f0f9ff;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #1e40af;
-            margin: 20px 0;
+            color: #007bff;
+            letter-spacing: 5px;
         }
         .footer {
             text-align: center;
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 14px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 20px;
-        }
-        .warning {
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #991b1b;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 20px 0;
-        }
-        .tip-branding {
-            background-color: #1e40af;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            margin-bottom: 20px;
+            margin-top: 20px;
             font-size: 12px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="tip-branding">
-            🎓 TECHNOLOGICAL INSTITUTE OF THE PHILIPPINES
+    <div class="header">
+        <img src="{{ asset('images/logo.png') }}" alt="Dentala Logo">
+        <h1>Password Reset</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello,</p>
+        <p>You requested an OTP for your password reset. Please use the code below to proceed:</p>
+        
+        <div class="otp-box">
+            <div class="otp-code">{{ $otpCode }}</div>
         </div>
         
-        <div class="header">
-            <div class="logo">🦷 Dentala Clinic</div>
-            <div class="subheader">TIP Support - Password Reset Service</div>
-        </div>
-
-        <h2>Password Reset Request</h2>
-        <p>Hello,</p>
-        <p>You requested to reset your password for your Dentala Clinic account. Use the OTP code below to proceed:</p>
-
-        <div class="otp-container">
-            <div>Your One-Time Password (OTP)</div>
-            <div class="otp-code">{{ $otpCode }}</div>
-            <div style="font-size: 14px; margin-top: 10px;">Valid for 5 minutes only</div>
-        </div>
-
-        <div class="instructions">
-            <h3>📋 Instructions:</h3>
-            <ol>
-                <li>Enter this 6-digit code in the password reset form</li>
-                <li>This code will expire in <strong>5 minutes</strong></li>
-                <li>If you didn't request this, please ignore this email</li>
-                <li>For technical support, contact TIP IT Department</li>
-            </ol>
-        </div>
-
-        <div class="warning">
-            <strong>⚠️ Security Notice:</strong> Never share this OTP with anyone. Our staff will never ask for your OTP code.
-        </div>
-
-        <div class="footer">
-            <p><strong>Dentala Clinic - TIP Support</strong></p>
-            <p>Technological Institute of the Philippines</p>
-            <p>© 2024 All rights reserved.</p>
-            <p>For questions: mrasalucop01@tip.edu.ph</p>
-        </div>
+        <p style="font-size: 14px; color: #777;">This code is valid for 5 minutes only.</p>
+        <p>If you did not request this, you can safely ignore this email.</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated notification from Dentala Clinic.</p>
+        <p>&copy; {{ date('Y') }} Dentala Clinic. All rights reserved.</p>
     </div>
 </body>
 </html>

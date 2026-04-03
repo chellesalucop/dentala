@@ -102,8 +102,11 @@ class AppointmentController extends Controller
 
         // 📧 Notify Admin & Patient
         try {
+            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+
             Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
-            Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending'));
+            Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
         } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
@@ -323,10 +326,14 @@ class AppointmentController extends Controller
 
         // 📧 Notify Patient
         try {
+            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+
             Mail::to($appointment->email)->send(new PatientNotificationMail(
                 $appointment, 
                 $request->status, 
-                $request->cancellation_reason ?? ''
+                $request->cancellation_reason ?? '',
+                $dentistName
             ));
         } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
 
@@ -487,10 +494,14 @@ class AppointmentController extends Controller
         $count = 0;
         foreach ($toRemind as $appointment) {
             try {
+                $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+                $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+
                 Mail::to($appointment->email)->send(new PatientNotificationMail(
                     $appointment, 
                     'reminder', 
-                    'Friendly reminder: Your appointment is scheduled for tomorrow. Please arrive 15 minutes early. We look forward to seeing you!'
+                    'Friendly reminder: Your appointment is scheduled for tomorrow. Please arrive 15 minutes early. We look forward to seeing you!',
+                    $dentistName
                 ));
                 $count++;
             } catch (\Exception $e) { \Log::error("Reminder Mail failed: " . $e->getMessage()); }
@@ -538,8 +549,11 @@ class AppointmentController extends Controller
             // 📧 Notify Patients
             foreach ($toExpire as $appointment) {
                 try {
-                        \Illuminate\Support\Facades\Mail::to($appointment->email)
-                            ->send(new PatientNotificationMail($appointment, 'expired'));
+                    $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+                    $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+
+                    \Illuminate\Support\Facades\Mail::to($appointment->email)
+                        ->send(new PatientNotificationMail($appointment, 'expired', '', $dentistName));
                 } catch (\Exception $e) { \Log::error("Expire Mail failed: " . $e->getMessage()); }
             }
         }

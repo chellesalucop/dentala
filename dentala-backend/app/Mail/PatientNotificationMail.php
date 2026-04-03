@@ -13,13 +13,16 @@ class PatientNotificationMail extends Mailable
     public $appointment;
     public $statusType;
     public $customMessage;
+    public $dentistName;
 
-    public function __construct($appointment, $statusType, $customMessage = '')
+    public function __construct($appointment, $statusType, $customMessage = '', $dentistName = 'Dentala Clinic Specialist')
     {
         $this->appointment = $appointment;
         $this->statusType = $statusType;
         $this->customMessage = $customMessage;
+        $this->dentistName = $dentistName;
     }
+
 
     public function build()
     {

@@ -15,11 +15,15 @@
             background-color: #f8f9fa;
         }
         .header {
-            background-color: #007bff;
+            background-color: #0162e0;
             color: white;
             padding: 20px;
             text-align: center;
             border-radius: 8px 8px 0 0;
+        }
+        .header img {
+            max-height: 60px;
+            margin-bottom: 5px;
         }
         .content {
             background-color: white;
@@ -34,15 +38,18 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 5px;
         }
         .detail-label {
             font-weight: bold;
             color: #666;
-            min-width: 120px;
+            min-width: 130px;
         }
         .detail-value {
             color: #333;
             flex: 1;
+            text-align: right;
         }
         .status-badge {
             display: inline-block;
@@ -52,69 +59,79 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-        .status-pending { background-color: #ffc107; color: #856404; }
-        .status-confirmed { background-color: #28a745; color: white; }
-        .status-completed { background-color: #28a745; color: white; }
-        .status-cancelled { background-color: #dc3545; color: white; }
-        .status-declined { background-color: #dc3545; color: white; }
-        .status-no-show { background-color: #dc3545; color: white; }
-        .status-expired { background-color: #6c757d; color: white; }
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-confirmed { background-color: #d4edda; color: #155724; }
+        .status-completed { background-color: #d4edda; color: #155724; }
+        .status-cancelled { background-color: #f8d7da; color: #721c24; }
+        .status-declined { background-color: #f8d7da; color: #721c24; }
+        .status-no-show { background-color: #f8d7da; color: #721c24; }
+        .status-expired { background-color: #e2e3e5; color: #383d41; }
+        .status-reminder { background-color: #cce5ff; color: #004085; }
         .footer {
             text-align: center;
             margin-top: 20px;
-            font-size: 12px;
-            color: #666;
+            font-size: 11px;
+            color: #888;
+        }
+        .message-box {
+            background-color: #fdfdfe;
+            border-left: 4px solid #0162e0;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
     <div class="header">
+        <img src="{{ asset('images/logo.png') }}" alt="Dentala Logo">
         <h1>Appointment Update</h1>
     </div>
     
     <div class="content">
-        <div class="appointment-details">
-            <div class="detail-row">
-                <span class="detail-label">Patient:</span>
-                <span class="detail-value">{{ $appointment->full_name }}</span>
+        @if(!empty($customMessage))
+            <div class="message-box">
+                "{{ $customMessage }}"
             </div>
+        @endif
+
+        <div class="appointment-details">
             <div class="detail-row">
                 <span class="detail-label">Status:</span>
                 <span class="detail-value">
-                    <span class="status-badge status-{{ $appointment->status }}">
-                        {{ ucfirst($appointment->status) }}
+                    <span class="status-badge status-{{ $statusType }}">
+                        {{ ucfirst($statusType) }}
                     </span>
                 </span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Date:</span>
+                <span class="detail-label">Patient Name:</span>
+                <span class="detail-value">{{ $appointment->full_name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Dentist In-Charge:</span>
+                <span class="detail-value"><strong>{{ $dentistName }}</strong></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Service Type:</span>
+                <span class="detail-value">{{ $appointment->service_type }} {{ $appointment->custom_service ? "({$appointment->custom_service})" : "" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Appointment Date:</span>
                 <span class="detail-value">{{ \Carbon\Carbon::parse($appointment->appointment_date)->format('F j, Y') }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Time:</span>
+                <span class="detail-label">Preferred Time:</span>
                 <span class="detail-value">{{ $appointment->preferred_time }}</span>
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Service:</span>
-                <span class="detail-value">{{ $appointment->service_type }}</span>
-            </div>
-            @if($appointment->custom_service)
-                <div class="detail-row">
-                    <span class="detail-label">Custom Service:</span>
-                    <span class="detail-value">{{ $appointment->custom_service }}</span>
-                </div>
-            @endif
-            @if($appointment->cancellation_reason)
-                <div class="detail-row">
-                    <span class="detail-label">Reason:</span>
-                    <span class="detail-value">{{ $appointment->cancellation_reason }}</span>
-                </div>
-            @endif
         </div>
+
+        <p style="font-size: 13px; color: #555;">Please arrive at least 15 minutes before your scheduled time to complete any necessary paperwork.</p>
     </div>
     
     <div class="footer">
-        <p>This is an automated notification from your Dental Clinic.</p>
+        <p>This is an automated notification from Dentala Clinic. Please do not reply to this email.</p>
+        <p>&copy; {{ date('Y') }} Dentala Clinic. All rights reserved.</p>
     </div>
 </body>
 </html>
