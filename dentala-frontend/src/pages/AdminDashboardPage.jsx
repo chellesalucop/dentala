@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../api';
+import { API_URL, getProfilePhotoUrl } from '../api';
 import { CheckCircle, XCircle, Calendar, X, AlertTriangle, Info, Clock, User, Mail, Phone } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -296,7 +296,7 @@ export default function AdminDashboardPage() {
                   <div className="w-20 h-20 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0">
                     {selectedAppointment.profile_photo_path ? (
                       <img 
-                        src={`${API_URL}/storage/${selectedAppointment.profile_photo_path}`} 
+                        src={getProfilePhotoUrl(selectedAppointment.profile_photo_path)} 
                         alt={selectedAppointment.full_name} 
                         className="w-full h-full object-cover rounded-full"
                       />

@@ -110,33 +110,68 @@ class UserController extends Controller
                 'required',
                 'image',
                 'mimes:jpeg,png,jpg,gif',
-                'max:2048' // This is 2048 KB (2MB)
+                'max:2048' // 2MB limit
             ]
-        ], [
-            // Custom helpful messages from the server
-            'image.max' => 'Image upload exceeded 2MB limit.',
-            'image.mimes' => 'Please use a valid image format (JPEG, PNG, GIF).',
-            'image.required' => 'Please select an image to upload.',
-            'image.image' => 'The file must be a valid image.',
         ]);
 
         $user = $request->user();
 
-        if ($user->profile_photo_path) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+        // 🛡️ CLOUDINARY INTEGRATION: The "Render Persistence" fix
+        $cloudName = env('CLOUDINARY_CLOUD_NAME');
+        $apiKey = env('CLOUDINARY_API_KEY');
+        $apiSecret = env('CLOUDINARY_API_SECRET');
+
+        if (!$cloudName || !$apiKey || !$apiSecret) {
+             return response()->json(['message' => 'Cloudinary not configured on this server.'], 500);
         }
 
-        $path = $request->file('image')->store('profile-photos', 'public');
+        try {
+            $file = $request->file('image');
+            $timestamp = time();
+            
+            // 🛡️ SECURE SIGNATURE: Ensures only your server can upload to your account
+            // Alphabetical order of parameters is required for the signature string
+            $paramsToSign = "folder=profile_photos&timestamp={$timestamp}{$apiSecret}";
+            $signature = sha1($paramsToSign);
 
-        $user->profile_photo_path = $path;
-        $user->save();
+            // 🚀 ZERO-DEPENDENCY UPLOAD: Use built-in Laravel Http client
+            $response = \Illuminate\Support\Facades\Http::attach(
+                'file', 
+                file_get_contents($file->getRealPath()), 
+                $file->getClientOriginalName()
+            )->post("https://api.cloudinary.com/v1_1/{$cloudName}/image/upload", [
+                'api_key' => $apiKey,
+                'timestamp' => $timestamp,
+                'signature' => $signature,
+                'folder' => 'profile_photos'
+            ]);
 
-        return response()->json([
-            'message' => 'Profile picture updated successfully!',
-            'user' => $user,
-            'url' => asset('storage/' . $path)
-        ], 200);
+            if (!$response->successful()) {
+                return response()->json(['message' => 'Cloud upload failed: ' . $response->json()['error']['message']], 500);
+            }
+
+            $cloudinaryData = $response->json();
+            $secureUrl = $cloudinaryData['secure_url']; // Full HTTPS URL
+
+            // Cleanup local file if it was a legacy storage path
+            if ($user->profile_photo_path && !str_starts_with($user->profile_photo_path, 'http')) {
+                Storage::disk('public')->delete($user->profile_photo_path);
+            }
+
+            $user->profile_photo_path = $secureUrl;
+            $user->save();
+
+            return response()->json([
+                'message' => 'Profile picture secured in the cloud!',
+                'user' => $user,
+                'url' => $secureUrl
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Server Error: ' . $e->getMessage()], 500);
+        }
     }
+
 
     /**
      * Fetch all registered dentists with full data

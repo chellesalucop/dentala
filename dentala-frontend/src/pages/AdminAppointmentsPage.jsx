@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../api';
+import { API_URL, getProfilePhotoUrl } from '../api';
 import { Search, CheckCircle, XCircle, CheckSquare, X, Calendar, User, Mail, Phone, RotateCw, Info, Plus, UserPlus, Clock } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -724,7 +724,7 @@ export default function AdminAppointmentsPage() {
                   <div className="w-20 h-20 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0">
                     {selectedAppointment.profile_photo_path ? (
                       <img 
-                        src={`${API_URL}/storage/${selectedAppointment.profile_photo_path}`} 
+                        src={getProfilePhotoUrl(selectedAppointment.profile_photo_path)} 
                         alt={selectedAppointment.full_name} 
                         className="w-full h-full object-cover rounded-full"
                       />

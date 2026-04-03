@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MoreVertical, Mail, Phone, Calendar, User as UserIcon, X, Clock, FileText, AlertCircle } from 'lucide-react';
-import { API_URL } from '../api';
+import { API_URL, getProfilePhotoUrl } from '../api';
 
 export default function AdminPatientsPage() {
   const [patients, setPatients] = useState([]);
@@ -128,7 +128,7 @@ export default function AdminPatientsPage() {
                         <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200">
                           {patient.profile_photo_path ? (
                             <img 
-                              src={`${API_URL}/storage/${patient.profile_photo_path}`} 
+                              src={getProfilePhotoUrl(patient.profile_photo_path)} 
                               alt="" 
                               className="w-full h-full object-cover"
                             />
@@ -208,7 +208,7 @@ export default function AdminPatientsPage() {
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
               <div className="flex items-center gap-4 min-w-0 flex-1"> 
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-white border border-gray-200 flex items-center justify-center shrink-0">
-                   {selectedPatient.profile_photo_path ? <img src={`${API_URL}/storage/${selectedPatient.profile_photo_path}`} className="w-full h-full object-cover" /> : <UserIcon className="w-full h-full p-2 text-gray-300" />}
+                   {selectedPatient.profile_photo_path ? <img src={getProfilePhotoUrl(selectedPatient.profile_photo_path)} className="w-full h-full object-cover" /> : <UserIcon className="w-full h-full p-2 text-gray-300" />}
                 </div>
                 <div className="text-left min-w-0 flex-1">
                   {/* 🛡️ THE FIX: Removed truncate, added break-all for vertical expansion */}

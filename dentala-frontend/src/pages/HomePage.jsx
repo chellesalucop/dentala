@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../api';
+import { API_URL, getProfilePhotoUrl } from '../api';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, User as UserIcon, X } from 'lucide-react';
 
@@ -228,7 +228,7 @@ export default function HomePage() {
                 <div className="h-48 bg-gray-50 flex items-end justify-center pt-4">
                   {dentist.profile_photo_path ? (
                     <img 
-                      src={`${API_URL}/storage/${dentist.profile_photo_path}`} 
+                      src={getProfilePhotoUrl(dentist.profile_photo_path)} 
                       alt={dentist.name} 
                       className="w-32 h-40 rounded-t-full object-contain" 
                     />

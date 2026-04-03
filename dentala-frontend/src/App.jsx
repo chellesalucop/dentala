@@ -11,7 +11,7 @@ import AppointmentFormPage from './pages/AppointmentFormPage';
 import AppointmentSummaryPage from './pages/AppointmentSummaryPage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import SettingsPage from './pages/SettingsPage';
-import { API_URL } from './api';
+import { API_URL, getProfilePhotoUrl } from './api';
 
 
 // Admin Pages Imports
@@ -59,9 +59,7 @@ function AppContent() {
   let userObj = userString ? JSON.parse(userString) : null;
   let displayName = userObj?.email || 'User'; 
   let userRole = userObj?.role || 'patient';
-  let profilePhoto = userObj?.profile_photo_path 
-    ? `${API_URL}/storage/${userObj.profile_photo_path}` 
-    : null;
+  let profilePhoto = getProfilePhotoUrl(userObj?.profile_photo_path);
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);

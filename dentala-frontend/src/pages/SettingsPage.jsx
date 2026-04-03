@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../api';
+import { API_URL, getProfilePhotoUrl } from '../api';
 import { Camera, User as UserIcon } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -35,7 +35,7 @@ export default function SettingsPage() {
       }));
 
       if (userData.profile_photo_path) {
-        setPreview(`${API_URL}/storage/${userData.profile_photo_path}`);
+        setPreview(getProfilePhotoUrl(userData.profile_photo_path));
       }
     }
   }, []);
@@ -172,7 +172,7 @@ export default function SettingsPage() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('user', JSON.stringify(data.user));
-        setPreview(`${API_URL}/storage/${data.user.profile_photo_path}`);
+        setPreview(getProfilePhotoUrl(data.user.profile_photo_path));
         alert("Profile photo updated successfully!");
       } else {
         alert("Failed to upload image.");
