@@ -724,7 +724,7 @@ export default function AdminAppointmentsPage() {
                   <div className="w-20 h-20 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0">
                     {selectedAppointment.profile_photo_path ? (
                       <img 
-                        src={`http://127.0.0.1:8000/storage/${selectedAppointment.profile_photo_path}`} 
+                        src={`${API_URL}/storage/${selectedAppointment.profile_photo_path}`} 
                         alt={selectedAppointment.full_name} 
                         className="w-full h-full object-cover rounded-full"
                       />

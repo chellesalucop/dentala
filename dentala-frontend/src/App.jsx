@@ -58,7 +58,7 @@ function AppContent() {
   let displayName = userObj?.email || 'User'; 
   let userRole = userObj?.role || 'patient';
   let profilePhoto = userObj?.profile_photo_path 
-    ? `http://127.0.0.1:8000/storage/${userObj.profile_photo_path}` 
+    ? `${API_URL}/storage/${userObj.profile_photo_path}` 
     : null;
 
   const handleLogout = async () => {
@@ -67,7 +67,7 @@ function AppContent() {
     
     if (token) {
       try {
-        await fetch('http://127.0.0.1:8000/api/logout', {
+        await fetch(`${API_URL}/api/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
