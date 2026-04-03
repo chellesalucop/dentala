@@ -44,8 +44,12 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 RUN chmod -R 775 /app/storage /app/bootstrap/cache
 
+# Create the storage link for images
+RUN php artisan storage:link
+
 # Expose port
 EXPOSE 10000
 
 # Start Laravel server
-CMD php artisan serve --host=0.0.0.0 --port=10000
+CMD php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=10000
+
