@@ -11,6 +11,8 @@ import AppointmentFormPage from './pages/AppointmentFormPage';
 import AppointmentSummaryPage from './pages/AppointmentSummaryPage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import SettingsPage from './pages/SettingsPage';
+import { API_URL } from './api';
+
 
 // Admin Pages Imports
 import AdminDashboardPage from './pages/AdminDashboardPage';
