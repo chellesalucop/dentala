@@ -429,7 +429,7 @@ export default function AppointmentFormPage() {
            {formData.hmoCardPath && (
              <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-sm border border-blue-200">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-[11px] font-bold text-gray-600">HMO Card Verified</span>
+                <span className="text-[11px] font-bold text-gray-600">HMO Card Uploaded</span>
              </div>
            )}
            {formData.hmoProvider !== 'None' && !formData.hmoCardPath && (
