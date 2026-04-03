@@ -26,28 +26,7 @@ Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/reset-password-otp', [AuthController::class, 'resetPasswordWithOtp']);
 
-// 🛠️ REFINED FIX ROUTE: Visit your-site.com/api/reset-admin after deployment
-Route::get('/reset-admin', function () {
-    $targetEmail = 'mrasalucop01@tip.edu.ph';
-    $user = \App\Models\User::where('email', $targetEmail)->first();
-
-    if ($user) {
-        $user->password = \Illuminate\Support\Facades\Hash::make('admin12345'); 
-        $user->role = 'admin'; // Ensure the role is correct
-        $user->save();
-        return response()->json([
-            'message' => 'SUCCESS! Password reset for ' . $targetEmail, 
-            'new_password' => 'admin12345'
-        ], 200);
-    }
-
-    // DEBUG: If not found, show what users actually exist
-    $allUsers = \App\Models\User::select('email', 'role')->get();
-    return response()->json([
-        'message' => 'ERROR: Account ' . $targetEmail . ' not found in database.',
-        'available_accounts' => $allUsers
-    ], 404);
-});
+Route::post('/reset-password-otp', [AuthController::class, 'resetPasswordWithOtp']);
 
 
 
