@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../api';
-import { CheckCircle, XCircle, Calendar, X, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Calendar, X, AlertTriangle, Info, Clock, User, Mail, Phone } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const [todaysSchedule, setTodaysSchedule] = useState([]);
@@ -16,6 +16,14 @@ export default function AdminDashboardPage() {
     action: '', 
     reason: '' // New state for the reason
   });
+
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -238,19 +246,27 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* 4. Action Buttons */}
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <button 
-                    onClick={() => handleActionConfirm(appt.id, 'confirmed')}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+                    onClick={() => openModal(appt)}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-[#5b9bd5] text-[#5b9bd5] font-bold rounded-xl hover:bg-blue-50 transition-all cursor-pointer shadow-sm"
                   >
-                    <CheckCircle className="w-4 h-4" /> Confirm
+                    <Info className="w-4 h-4" /> View Details
                   </button>
-                  <button 
-                    onClick={() => handleActionConfirm(appt.id, 'declined')}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#1a1a1a] hover:bg-[#333333] text-white font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
-                  >
-                    <XCircle className="w-4 h-4" /> Decline
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleActionConfirm(appt.id, 'confirmed')}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+                    >
+                      <CheckCircle className="w-4 h-4" /> Confirm
+                    </button>
+                    <button 
+                      onClick={() => handleActionConfirm(appt.id, 'declined')}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#1a1a1a] hover:bg-[#333333] text-white font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
+                    >
+                      <XCircle className="w-4 h-4" /> Decline
+                    </button>
+                  </div>
                 </div>
 
               </div>
@@ -259,6 +275,93 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* MODAL: Patient Information (Dashboard View) */}
+      {isModalOpen && selectedAppointment && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[130] p-4" onClick={() => setIsModalOpen(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
+              <h2 className="text-2xl font-bold text-gray-900 text-left">Patient Information</h2>
+              <button onClick={() => setIsModalOpen(false)} className="bg-black hover:bg-gray-800 text-white p-1.5 rounded-full transition-colors flex items-center justify-center border-none cursor-pointer">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-8 text-left">
+              {/* 1. Patient Primary Identity Card */}
+              <section className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-20 h-20 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                    {selectedAppointment.profile_photo_path ? (
+                      <img 
+                        src={`${API_URL}/storage/${selectedAppointment.profile_photo_path}`} 
+                        alt={selectedAppointment.full_name} 
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <User size={40} className="text-gray-300" />
+                    )}
+                  </div>
+                  <div className="text-center md:text-left">
+                    <h4 className="text-2xl font-bold text-black mb-2 break-all line-clamp-2">
+                      {selectedAppointment.full_name}
+                    </h4>
+                    <div className="space-y-1">
+                      <p className="flex items-center justify-center md:justify-start gap-2 text-sm text-gray-600 break-all">
+                        <Mail size={16} className="text-[#5b9bd5] shrink-0" /> 
+                        <span>{selectedAppointment.email}</span>
+                      </p>
+                      <p className="flex items-center justify-center md:justify-start gap-2 text-sm text-gray-600">
+                        <Phone size={16} className="text-[#5b9bd5]" /> {selectedAppointment.phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* 2. Service Requested Section */}
+              <section>
+                <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Service Requested</h4>
+                <p className="text-lg font-bold text-gray-900 break-words whitespace-pre-wrap">
+                  {selectedAppointment.service_type === 'Other' 
+                    ? `${selectedAppointment.custom_service || 'Other'}` 
+                    : selectedAppointment.service_type}
+                </p>
+                <p className="text-sm font-bold text-blue-600 mt-1">
+                   {new Date(selectedAppointment.appointment_date).toLocaleDateString()} at {selectedAppointment.preferred_time}
+                </p>
+              </section>
+
+              {/* 3. Clinical & Medical Section */}
+              <section className="pt-8 border-t border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Medical Conditions</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                      {(() => {
+                        const medicalConditions = selectedAppointment?.medical_conditions;
+                        if (Array.isArray(medicalConditions)) return medicalConditions.join(', ') || 'None';
+                        if (typeof medicalConditions === 'string') {
+                          try { return JSON.parse(medicalConditions).join(', ') || 'None'; } catch (e) { return medicalConditions || 'None'; }
+                        }
+                        return 'None';
+                      })()}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Clinical Notes</h4>
+                    <p className="text-sm text-gray-600 italic">
+                      {selectedAppointment.others || 'None provided.'}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
