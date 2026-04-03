@@ -144,10 +144,11 @@ class UserController extends Controller
     public function getDentists()
     {
         try {
-            // 🛡️ FULL-DATA FETCH: Include email field for frontend selection logic
+            // 🛡️ FULL-DATA FETCH: Include email and photo path
             $dentists = User::where('role', 'admin')
-                            ->select('id', 'name', 'email') 
+                            ->select('id', 'name', 'email', 'profile_photo_path') 
                             ->get();
+
 
             return response()->json(['dentists' => $dentists], 200);
         } catch (\Exception $e) {
