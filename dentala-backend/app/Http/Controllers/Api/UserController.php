@@ -144,10 +144,11 @@ class UserController extends Controller
     public function getDentists()
     {
         try {
-            // 🛡️ FULL-DATA FETCH: Include email and photo path
+            // 🛡️ FULL-DATA FETCH: Include name, email, specialization, and photo
             $dentists = User::where('role', 'admin')
-                            ->select('id', 'name', 'email', 'profile_photo_path') 
+                            ->select('id', 'name', 'email', 'profile_photo_path', 'specialization') 
                             ->get();
+
 
 
             return response()->json(['dentists' => $dentists], 200);
@@ -164,21 +165,22 @@ class UserController extends Controller
         $user = $request->user();
 
         $request->validate([
+            'name' => 'required|string|max:255',
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:255',
-                // Ensure email is unique but ignore this user
                 'unique:users,email,' . $user->id, 
                 'regex:/^[a-z0-9._%+-]+@(gmail\.com|yahoo\.com|tip\.edu\.ph)$/i'
             ],
             'phone' => [
                 'required',
-                'digits:11', // 
+                'digits:11', 
                 'unique:users,phone,' . $user->id,
-                'regex:/^09[0-9]{9}$/' // 
+                'regex:/^09[0-9]{9}$/' 
             ],
+            'specialization' => 'nullable|string|max:255',
         ], [
             'phone.digits' => 'Phone number must be exactly 11 digits.',
             'phone.regex' => 'Please use a valid Philippine mobile format (09XXXXXXXXX).',
@@ -186,12 +188,15 @@ class UserController extends Controller
         ]);
 
         $user->update([
+            'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'specialization' => $request->specialization,
         ]);
 
-        return response()->json(['message' => 'Profile updated!', 'user' => $user], 200);
+        return response()->json(['message' => 'Profile updated!', 'user' => $user->fresh()], 200);
     }
+
 
     /**
      * Change password

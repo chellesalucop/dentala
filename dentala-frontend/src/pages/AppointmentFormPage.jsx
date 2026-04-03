@@ -16,22 +16,28 @@ export default function AppointmentFormPage() {
   const [isLoadingDentists, setIsLoadingDentists] = useState(true);
   const [takenSlots, setTakenSlots] = useState([]); // Blacklisted time slots
 
-  // Initialize: Use the passed state if it exists, otherwise empty
-  const [formData, setFormData] = useState(
-    location.state?.formData || {
-      fullName: '', // Maps to phpMyAdmin Column 3
-      phone: '',     // Maps to phpMyAdmin Column 4
-      email: '',     // Maps to phpMyAdmin Column 5
-      medicalConditions: [], // Array for checkboxes
+  // 🛡️ DENTAL DATA HYDRATION: Pre-fill from profile if logged in
+  const getInitialFormData = () => {
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    
+    return location.state?.formData || {
+      fullName: user?.name || '', 
+      phone: user?.phone || '',     
+      email: user?.email || '',     
+      medicalConditions: [], 
       serviceType: '',
-      customService: '', // New field for "Other" service details
+      customService: '', 
       otherServiceDetails: '',
       preferredDentist: '',
       others: '',
       appointmentDate: '',
       preferredTime: ''
-    }
-  );
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData());
+
 
   // 🛡️ THE REFRESH GUARD
   useEffect(() => {

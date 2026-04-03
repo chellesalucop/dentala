@@ -26,6 +26,11 @@ Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/reset-password-otp', [AuthController::class, 'resetPasswordWithOtp']);
 Route::get('/reminders/send', [AppointmentController::class, 'sendReminders']);
+Route::get('/run-migrations', function() {
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    return "Migrations executed successfully!";
+});
+
 
 
 

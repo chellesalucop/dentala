@@ -230,20 +230,23 @@ export default function HomePage() {
                     <img 
                       src={`${API_URL}/storage/${dentist.profile_photo_path}`} 
                       alt={dentist.name} 
-                      className="w-32 h-40 rounded-t-full object-cover" 
+                      className="w-32 h-40 rounded-t-full object-contain" 
                     />
                   ) : (
                     <img 
                       src="/images/dentist.png" 
                       alt={dentist.name} 
-                      className="w-32 h-40 rounded-t-full object-cover" 
+                      className="w-32 h-40 rounded-t-full object-contain" 
                     />
                   )}
                 </div>
                 <div className="p-4">
                   <h3 className="font-bold mb-1">Dr. {dentist.name}</h3>
-                  <p className="text-sm text-gray-500">General Dentistry</p>
+                  <p className="text-sm text-gray-500 font-medium">
+                    {dentist.specialization || 'General Dentistry'}
+                  </p>
                 </div>
+
               </div>
             ))
           ) : (

@@ -274,7 +274,7 @@ Do not use the platform for anything that is unlawful.`
             <p className="text-sm italic text-black">Providing exceptional dental care with a commitment to your health and beautiful smiles.</p>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-4 text-black underline decoration-dentalBlue">Help</h3>
+            <h3 className="font-bold text-lg mb-4 text-black">Help</h3>
             <ul className="text-sm space-y-2 italic text-black list-none p-0">
               <li><a onClick={(e) => openModal(e, 'About Us', modalData.about)} className={footerLinkClass}>About Us</a></li>
               <li><a onClick={(e) => openModal(e, 'FAQS', modalData.faqs)} className={footerLinkClass}>FAQS</a></li>
@@ -283,7 +283,7 @@ Do not use the platform for anything that is unlawful.`
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-4 text-black underline decoration-dentalBlue">Contact Us</h3>
+            <h3 className="font-bold text-lg mb-4 text-black">Contact Us</h3>
             <ul className="text-sm space-y-4 text-black list-none p-0">
               <li className="flex items-start gap-3">
                 <img src="/images/location.png" alt="Location" className="w-5 h-5 mt-0.5" />
@@ -296,7 +296,7 @@ Do not use the platform for anything that is unlawful.`
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-4 text-black underline decoration-dentalBlue">Social</h3>
+            <h3 className="font-bold text-lg mb-4 text-black">Social</h3>
             <div className="flex items-center gap-4">
                <a href="https://www.facebook.com/profile.php?id=61576479103227" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition"><img src="/images/facebook.png" alt="FB" className="w-6 h-6" /></a>
                <a href="https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2Fdentalawebapp%2F%3Ffbclid%3DIwZXh0bgNhZW0CMTAAYnJpZBExRmR6ZzZhUEZFQzdJczlQZHNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR6k3306bleBiSPPFs9GOXSL9-KxzH5uVY8WrHlh1lmD-u-6-DzaDvD3Cfnvmg_aem_v5_Gx-FuztNfRqct0nyO3g&h=AT6l_SLB8v9v4TygD6SJgz4X_gYg3pguF5sjINBJwBsuyjruWPlkvWnozvAmcdE41p_H3XcADB4GmsOc53lhm5RsIaboF_EvQMmeblYZuPGy9FOXsvON882gm48ELpAgef7Iig" target="_blank" rel="noopener noreferrer" className="hover:scale-110 transition"><img src="/images/instagram.png" alt="IG" className="w-6 h-6" /></a>
