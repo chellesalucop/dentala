@@ -205,6 +205,7 @@ class AppointmentController extends Controller
                 'appointments.medical_conditions', 'appointments.others', 'appointments.appointment_date', 
                 'appointments.preferred_time', 'appointments.status', 'appointments.cancellation_reason',
                 'appointments.created_at', 'appointments.updated_at', // 🛡️ CRITICAL MISSING PIECE
+                'appointments.hmo_provider', 'appointments.hmo_card_path',
                 'users.profile_photo_path', 'users.email as user_email'
             ]);
 
@@ -233,6 +234,7 @@ class AppointmentController extends Controller
             'appointments.medical_conditions', 'appointments.others', 'appointments.appointment_date', 
             'appointments.preferred_time', 'appointments.status', 'appointments.cancellation_reason',
             'appointments.created_at', 'appointments.updated_at', // 🛡️ NECESSARY FOR TIMESTAMPS
+            'appointments.hmo_provider', 'appointments.hmo_card_path',
             'users.profile_photo_path', 'users.email as user_email'
         ];
 

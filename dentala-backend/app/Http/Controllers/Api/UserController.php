@@ -94,7 +94,8 @@ class UserController extends Controller
                 'id', 'user_id', 'full_name', 'phone', 'email', 
                 'service_type', 'custom_service', 'preferred_dentist',
                 'medical_conditions', 'others', 'appointment_date', 
-                'preferred_time', 'status', 'cancellation_reason'
+                'preferred_time', 'status', 'cancellation_reason',
+                'hmo_provider', 'hmo_card_path'
             ]);
 
         return response()->json($appointments);
