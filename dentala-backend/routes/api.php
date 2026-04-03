@@ -26,6 +26,19 @@ Route::post('/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/reset-password-otp', [AuthController::class, 'resetPasswordWithOtp']);
 
+// 🛠️ TEMPORARY FIX ROUTE: Visit your-site.com/api/reset-admin in the browser once
+Route::get('/reset-admin', function () {
+    $user = \App\Models\User::where('role', 'admin')->first();
+    if ($user) {
+        // Change 'admin12345' to whatever password you want to use
+        $user->password = \Illuminate\Support\Facades\Hash::make('admin12345'); 
+        $user->save();
+        return response()->json(['message' => 'Admin password fixed successfully! Your new password is: admin12345'], 200);
+    }
+    return response()->json(['message' => 'Admin user not found.'], 404);
+});
+
+
 /*
 |--------------------------------------------------------------------------
 | PROTECTED ROUTES (Requires Sanctum Login Token)
