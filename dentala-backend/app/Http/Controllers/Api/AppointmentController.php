@@ -100,12 +100,14 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::create($validated);
 
-        // 📧 Notify Admin
+        // 📧 Notify Admin & Patient
         try {
             Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+            Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending'));
         } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
+
     }
 
     /**
@@ -467,9 +469,41 @@ class AppointmentController extends Controller
     }
 
     /**
+     * 🛡️ THE REMINDER: Sends emails to patients scheduled for tomorrow
+     * This should be triggered once a day by a Cron Job (e.g. cron-job.org)
+     */
+    public function sendReminders()
+    {
+        $tomorrow = \Carbon\Carbon::tomorrow()->toDateString();
+        
+        $toRemind = Appointment::where('status', 'confirmed')
+            ->where('appointment_date', $tomorrow)
+            ->get();
+
+        if ($toRemind->isEmpty()) {
+            return response()->json(['message' => 'No appointments to remind for tomorrow.'], 200);
+        }
+
+        $count = 0;
+        foreach ($toRemind as $appointment) {
+            try {
+                Mail::to($appointment->email)->send(new PatientNotificationMail(
+                    $appointment, 
+                    'reminder', 
+                    'Friendly reminder: Your appointment is scheduled for tomorrow. Please arrive 15 minutes early. We look forward to seeing you!'
+                ));
+                $count++;
+            } catch (\Exception $e) { \Log::error("Reminder Mail failed: " . $e->getMessage()); }
+        }
+
+        return response()->json(['message' => "Successfully sent {$count} reminders for {$tomorrow}."], 200);
+    }
+
+    /**
      * 🛡️ THE JANITOR: Automatically expires pending appointments that are past due
      */
     private function autoExpireAppointments($dentistEmail = null)
+
     {
         $now = \Carbon\Carbon::now();
         $today = $now->toDateString();

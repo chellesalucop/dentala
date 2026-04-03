@@ -25,13 +25,17 @@ class PatientNotificationMail extends Mailable
     {
         // Map of status to a clear, human-readable title
         $subjects = [
+            'pending'   => 'Appointment Received - Pending Approval',
             'confirmed' => 'Appointment Confirmed',
             'completed' => 'Appointment Completed',
             'cancelled' => 'Appointment Cancelled',
             'declined'  => 'Appointment Declined',
             'no-show'   => 'Appointment Marked as No-Show',
             'expired'   => 'Appointment Expired',
+            'reminder'  => 'Reminder: You have an appointment tomorrow!',
         ];
+
+
 
         $subject = $subjects[$this->statusType] ?? 'Appointment Update';
 
