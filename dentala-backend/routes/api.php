@@ -69,8 +69,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
     Route::put('/user/password', [UserController::class, 'changePassword']);
     
-    // --- NEW: Profile Picture Route ---
+    // --- NEW: Profile Picture & HMO Routes ---
     Route::post('/user/profile-picture', [UserController::class, 'updateProfilePicture']);
+    Route::post('/user/hmo-card', [UserController::class, 'updateHmoCard']);
     
     // Admin/Dentist Routes
     Route::get('/admin/appointments', [AppointmentController::class, 'adminIndex']);

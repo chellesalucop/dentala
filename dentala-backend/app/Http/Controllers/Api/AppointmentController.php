@@ -93,6 +93,8 @@ class AppointmentController extends Controller
             'others' => 'nullable|string|max:255',
             'appointment_date' => 'required|date|after:today',
             'preferred_time' => 'required|string|max:50',
+            'hmo_provider' => 'nullable|string',
+            'hmo_card_path' => 'nullable|string',
         ], $messages);
 
         $validated['user_id'] = $user->id;
@@ -448,6 +450,8 @@ class AppointmentController extends Controller
             'preferred_time' => $validated['preferredTime'],
             'medical_conditions' => json_encode($validated['medicalConditions']),
             'others' => $validated['others'],
+            'hmo_provider' => $validated['hmo_provider'] ?? null,
+            'hmo_card_path' => $validated['hmo_card_path'] ?? null,
             'status' => 'confirmed',
             'booked_by_admin' => true,
         ]);

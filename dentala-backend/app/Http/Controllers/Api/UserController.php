@@ -216,6 +216,7 @@ class UserController extends Controller
                 'regex:/^09[0-9]{9}$/' 
             ],
             'specialization' => 'nullable|string|max:255',
+            'hmo_provider' => 'nullable|string|in:Medicard,Maxicare,None',
         ], [
             'phone.digits' => 'Phone number must be exactly 11 digits.',
             'phone.regex' => 'Please use a valid Philippine mobile format (09XXXXXXXXX).',
@@ -227,9 +228,72 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'specialization' => $request->specialization,
+            'hmo_provider' => $request->hmo_provider,
         ]);
 
         return response()->json(['message' => 'Profile updated!', 'user' => $user->fresh()], 200);
+    }
+
+    /**
+     * Upload and save HMO Card to Cloudinary
+     */
+    public function updateHmoCard(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $user = $request->user();
+
+        $cloudName = env('CLOUDINARY_CLOUD_NAME');
+        $apiKey = env('CLOUDINARY_API_KEY');
+        $apiSecret = env('CLOUDINARY_API_SECRET');
+
+        if (!$cloudName || !$apiKey || !$apiSecret) {
+             return response()->json(['message' => 'Cloudinary not configured.'], 500);
+        }
+
+        try {
+            $file = $request->file('image');
+            $timestamp = time();
+            $paramsToSign = "folder=hmo_cards&timestamp={$timestamp}{$apiSecret}";
+            $signature = sha1($paramsToSign);
+
+            $response = \Illuminate\Support\Facades\Http::attach(
+                'file', 
+                file_get_contents($file->getRealPath()), 
+                $file->getClientOriginalName()
+            )->post("https://api.cloudinary.com/v1_1/{$cloudName}/image/upload", [
+                'api_key' => $apiKey,
+                'timestamp' => $timestamp,
+                'signature' => $signature,
+                'folder' => 'hmo_cards'
+            ]);
+
+            if (!$response->successful()) {
+                return response()->json(['message' => 'HMO Card upload failed.'], 500);
+            }
+
+            $cloudinaryData = $response->json();
+            $secureUrl = $cloudinaryData['secure_url'];
+
+            // Cleanup local file if it exists
+            if ($user->hmo_card_path && !str_starts_with($user->hmo_card_path, 'http')) {
+                Storage::disk('public')->delete($user->hmo_card_path);
+            }
+
+            $user->hmo_card_path = $secureUrl;
+            $user->save();
+
+            return response()->json([
+                'message' => 'HMO Card secured in the cloud!',
+                'user' => $user,
+                'url' => $secureUrl
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Server Error: ' . $e->getMessage()], 500);
+        }
     }
 
 

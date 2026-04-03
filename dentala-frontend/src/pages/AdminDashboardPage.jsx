@@ -335,28 +335,41 @@ export default function AdminDashboardPage() {
               </section>
 
               {/* 3. Clinical & Medical Section */}
-              <section className="pt-8 border-t border-gray-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Medical Conditions</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                      {(() => {
-                        const medicalConditions = selectedAppointment?.medical_conditions;
-                        if (Array.isArray(medicalConditions)) return medicalConditions.join(', ') || 'None';
-                        if (typeof medicalConditions === 'string') {
-                          try { return JSON.parse(medicalConditions).join(', ') || 'None'; } catch (e) { return medicalConditions || 'None'; }
-                        }
-                        return 'None';
-                      })()}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Clinical Notes</h4>
-                    <p className="text-sm text-gray-600 italic">
-                      {selectedAppointment.others || 'None provided.'}
-                    </p>
-                  </div>
+              <section className="pt-8 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Medical Conditions</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                    {(() => {
+                      const medicalConditions = selectedAppointment?.medical_conditions;
+                      if (Array.isArray(medicalConditions)) return medicalConditions.join(', ') || 'None';
+                      if (typeof medicalConditions === 'string') {
+                        try { return JSON.parse(medicalConditions).join(', ') || 'None'; } catch (e) { return medicalConditions || 'None'; }
+                      }
+                      return 'None';
+                    })()}
+                  </p>
                 </div>
+                <div>
+                  <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">HMO Information</h4>
+                  <p className="text-sm font-bold text-gray-800">
+                    Provider: <span className={selectedAppointment.hmo_provider !== 'None' ? 'text-blue-600' : 'text-gray-400'}>{selectedAppointment.hmo_provider || 'None'}</span>
+                  </p>
+                  {selectedAppointment.hmo_card_path && (
+                    <div className="mt-3">
+                       <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">HMO Card Preview:</p>
+                       <a href={selectedAppointment.hmo_card_path} target="_blank" rel="noopener noreferrer" className="block w-full h-32 rounded-lg border border-gray-200 overflow-hidden hover:opacity-90 transition">
+                         <img src={selectedAppointment.hmo_card_path} className="w-full h-full object-cover" alt="HMO Card" />
+                       </a>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="pt-8 border-t border-gray-100">
+                <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Clinical Notes</h4>
+                <p className="text-sm text-gray-600 italic">
+                  {selectedAppointment.others || 'None provided.'}
+                </p>
               </section>
             </div>
           </div>

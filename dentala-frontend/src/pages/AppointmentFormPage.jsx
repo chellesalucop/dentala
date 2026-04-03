@@ -32,7 +32,9 @@ export default function AppointmentFormPage() {
       preferredDentist: '',
       others: '',
       appointmentDate: '',
-      preferredTime: ''
+      preferredTime: '',
+      hmoProvider: user?.hmo_provider || 'None',
+      hmoCardPath: user?.hmo_card_path || null
     };
   };
 
@@ -282,7 +284,9 @@ export default function AppointmentFormPage() {
       // Ensure that medical notes go to 'others'
       custom_service: formData.customService, 
       others: formData.others,
-      service_type: formData.serviceType
+      service_type: formData.serviceType,
+      hmo_provider: formData.hmoProvider,
+      hmo_card_path: formData.hmoCardPath
     };
 
     console.log("SENDING TO BACKEND:", payload); // 🔍 Check this in your console before clicking!
@@ -412,6 +416,25 @@ export default function AppointmentFormPage() {
             Email Address
           </label>
           <input type="text" name="email" maxLength={255} value={formData.email} onChange={handleChange} className={inputBaseClass} placeholder="Enter email address" required />
+        </div>
+
+        {/* HMO Information Reflection */}
+        <div className="mt-6 p-4 bg-blue-50/50 rounded-lg border border-blue-100 flex flex-col md:flex-row justify-between items-center gap-4">
+           <div className="text-left">
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">HMO Status</p>
+              <h4 className="font-bold text-gray-800">
+                Provider: <span className="text-[#5b9bd5]">{formData.hmoProvider}</span>
+              </h4>
+           </div>
+           {formData.hmoCardPath && (
+             <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-sm border border-blue-200">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-[11px] font-bold text-gray-600">HMO Card Verified</span>
+             </div>
+           )}
+           {formData.hmoProvider !== 'None' && !formData.hmoCardPath && (
+             <p className="text-[10px] font-bold text-red-500 italic">No HMO Card uploaded in settings</p>
+           )}
         </div>
       </section>
 

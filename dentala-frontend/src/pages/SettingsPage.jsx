@@ -9,13 +9,16 @@ export default function SettingsPage() {
     phone: '',
     email: '',
     specialization: '',
+    hmo_provider: 'None',
     current_password: '',
     password: '',
     password_confirmation: ''
   });
 
   const [preview, setPreview] = useState(null);
+  const [hmoPreview, setHmoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [hmoUploading, setHmoUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const token = localStorage.getItem('auth_token');
@@ -37,6 +40,13 @@ export default function SettingsPage() {
       if (userData.profile_photo_path) {
         setPreview(getProfilePhotoUrl(userData.profile_photo_path));
       }
+      if (userData.hmo_card_path) {
+        setHmoPreview(getProfilePhotoUrl(userData.hmo_card_path));
+      }
+      setFormData(prev => ({
+        ...prev,
+        hmo_provider: userData.hmo_provider || 'None'
+      }));
     }
   }, []);
 
@@ -98,7 +108,8 @@ export default function SettingsPage() {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          specialization: formData.specialization
+          specialization: formData.specialization,
+          hmo_provider: formData.hmo_provider
         })
       });
 
@@ -181,6 +192,42 @@ export default function SettingsPage() {
       console.error("Upload error:", error);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleHmoCardChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Image is too large. 2MB maximum.");
+      return;
+    }
+
+    setHmoUploading(true);
+    const imageForm = new FormData();
+    imageForm.append('image', file);
+
+    try {
+      const response = await fetch(`${API_URL}/api/user/hmo-card`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: imageForm
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setHmoPreview(getProfilePhotoUrl(data.user.hmo_card_path));
+        alert("HMO Card updated successfully!");
+      } else {
+        alert("Failed to upload HMO Card.");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+    } finally {
+      setHmoUploading(false);
     }
   };
 
@@ -273,6 +320,59 @@ export default function SettingsPage() {
               />
               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
+
+            {user.role === 'patient' && (
+              <div className="md:col-span-2 border-t pt-6 mt-2">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  <div className="flex-1 w-full">
+                    <label className="block font-bold text-sm mb-1 uppercase tracking-wider text-gray-500">HMO Provider</label>
+                    <p className="text-[10px] font-bold text-blue-600 mb-2">Accepted HMOs</p>
+                    <select
+                      name="hmo_provider"
+                      value={formData.hmo_provider}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-gray-200 bg-gray-50 rounded-md outline-none focus:ring-2 focus:ring-blue-500 transition font-medium"
+                    >
+                      <option value="None">None</option>
+                      <option value="Medicard">Medicard</option>
+                      <option value="Maxicare">Maxicare</option>
+                    </select>
+                  </div>
+
+                  {(formData.hmo_provider === 'Medicard' || formData.hmo_provider === 'Maxicare') && (
+                    <div className="flex-1 w-full animate-fade-in">
+                      <label className="block font-bold text-sm mb-1 uppercase tracking-wider text-gray-500">HMO Card Image</label>
+                      <p className="text-[10px] font-bold text-gray-400 mb-3">Upload a clear photo of your card (Max 2MB)</p>
+                      
+                      <div className="relative group">
+                        <div className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden transition group-hover:border-blue-400">
+                          {hmoPreview ? (
+                            <img src={hmoPreview} className="w-full h-full object-cover" alt="HMO Card" />
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 text-gray-400">
+                               <Camera size={24} />
+                               <span className="text-[10px] font-bold uppercase">Click to select</span>
+                            </div>
+                          )}
+                          {hmoUploading && (
+                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                              <span className="text-xs font-bold text-blue-600 animate-pulse uppercase">Uploading...</span>
+                            </div>
+                          )}
+                        </div>
+                        <input 
+                          type="file" 
+                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                          onChange={handleHmoCardChange} 
+                          accept="image/*"
+                          disabled={hmoUploading}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end">

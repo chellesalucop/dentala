@@ -26,6 +26,8 @@ class User extends Authenticatable
         'role',
         'profile_photo_path',
         'specialization',
+        'hmo_provider',
+        'hmo_card_path',
     ];
 
 

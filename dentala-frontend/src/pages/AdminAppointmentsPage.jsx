@@ -763,44 +763,57 @@ export default function AdminAppointmentsPage() {
               </section>
 
               {/* 3. Clinical & Medical Section */}
-              <section className="pt-8 border-t border-gray-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* 🛡️ Walkin-Join-Crash-Fix: Safely handles both Array and String formats */}
-                  <div>
-                    <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Medical Conditions</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
-                      {(() => {
-                        const medicalConditions = selectedAppointment?.medical_conditions;
-                        
-                        // 1. If it's already an array, join it
-                        if (Array.isArray(medicalConditions)) {
-                          return medicalConditions.length > 0 ? medicalConditions.join(', ') : 'No medical conditions listed.';
+              <section className="pt-8 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* 🛡️ Walkin-Join-Crash-Fix: Safely handles both Array and String formats */}
+                <div>
+                  <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Medical Conditions</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
+                    {(() => {
+                      const medicalConditions = selectedAppointment?.medical_conditions;
+                      
+                      // 1. If it's already an array, join it
+                      if (Array.isArray(medicalConditions)) {
+                        return medicalConditions.length > 0 ? medicalConditions.join(', ') : 'No medical conditions listed.';
+                      }
+                      
+                      // 2. If it's a JSON string from the DB, parse and join it
+                      if (typeof medicalConditions === 'string' && medicalConditions.trim() !== '') {
+                        try {
+                          const parsed = JSON.parse(medicalConditions);
+                          return Array.isArray(parsed) && parsed.length > 0 
+                            ? parsed.join(', ') 
+                            : 'No medical conditions listed.';
+                        } catch (e) {
+                          // Fallback if it's a plain non-JSON string
+                          return medicalConditions;
                         }
-                        
-                        // 2. If it's a JSON string from the DB, parse and join it
-                        if (typeof medicalConditions === 'string' && medicalConditions.trim() !== '') {
-                          try {
-                            const parsed = JSON.parse(medicalConditions);
-                            return Array.isArray(parsed) && parsed.length > 0 
-                              ? parsed.join(', ') 
-                              : 'No medical conditions listed.';
-                          } catch (e) {
-                            // Fallback if it's a plain non-JSON string
-                            return medicalConditions;
-                          }
-                        }
-                        
-                        return 'No medical conditions listed.';
-                      })()}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Clinical Notes</h4>
-                    <p className="text-sm text-gray-600 italic break-all whitespace-pre-wrap">
-                      {selectedAppointment.others || 'None provided.'}
-                    </p>
-                  </div>
+                      }
+                      
+                      return 'No medical conditions listed.';
+                    })()}
+                  </p>
                 </div>
+                <div>
+                  <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">HMO Information</h4>
+                  <p className="text-sm font-bold text-gray-800">
+                    Provider: <span className={selectedAppointment.hmo_provider !== 'None' ? 'text-blue-600' : 'text-gray-400'}>{selectedAppointment.hmo_provider || 'None'}</span>
+                  </p>
+                  {selectedAppointment.hmo_card_path && (
+                    <div className="mt-3">
+                       <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">HMO Card Preview:</p>
+                       <a href={selectedAppointment.hmo_card_path} target="_blank" rel="noopener noreferrer" className="block w-full h-32 rounded-lg border border-gray-200 overflow-hidden hover:opacity-90 transition">
+                         <img src={selectedAppointment.hmo_card_path} className="w-full h-full object-cover" alt="HMO Card" />
+                       </a>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="pt-8 border-t border-gray-100">
+                <h4 className="text-xs uppercase text-black font-bold mb-3 tracking-[0.2em]">Clinical Notes</h4>
+                <p className="text-sm text-gray-600 italic">
+                  {selectedAppointment.others || 'No clinical notes provided.'}
+                </p>
               </section>
 
               {/* 4. Appointment Details Grid */}

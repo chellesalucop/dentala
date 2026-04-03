@@ -65,7 +65,9 @@ export default function AppointmentSummaryPage() {
       appointment_date: formData.appointmentDate,
       preferred_time: formData.preferredTime,
       // 🛡️ THE CRITICAL FIX: Explicitly map custom_service field
-      custom_service: formData.customService
+      custom_service: formData.customService,
+      hmo_provider: formData.hmoProvider,
+      hmo_card_path: formData.hmoCardPath
     };
 
     try {
@@ -199,6 +201,21 @@ export default function AppointmentSummaryPage() {
             <p><span className="text-gray-500">Time:</span> {formData.preferredTime}</p>
           </div>
         </section>
+
+        {formData.hmoProvider && formData.hmoProvider !== 'None' && (
+          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg animate-fade-in shadow-sm">
+            <div className="flex gap-3 items-start">
+              <div className="bg-amber-100 p-1 rounded-full text-amber-600">
+                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                 </svg>
+              </div>
+              <p className="text-sm text-amber-800 font-bold leading-tight">
+                Important: Please bring your physical <span className="underline">{formData.hmoProvider}</span> HMO card in your scheduled Appointment for verification.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-4 pt-4">
           <button 

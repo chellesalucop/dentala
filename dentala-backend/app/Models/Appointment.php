@@ -26,6 +26,8 @@ class Appointment extends Model
         'status',
         'cancellation_reason',
         'booked_by_admin',
+        'hmo_provider',
+        'hmo_card_path',
     ];
 
     // The attributes that should be cast.
