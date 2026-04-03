@@ -193,39 +193,64 @@ export default function AdminDashboardPage() {
 
         {/* Pending Approvals (Right) */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 lg:p-8 shadow-sm">
-          <h2 className="text-lg font-semibold italic mb-6">Pending Approvals</h2>
+          <h2 className="text-lg font-semibold italic mb-6">Pending Approvals ({pendingApprovals.length})</h2>
           <div className="space-y-4">
             {pendingApprovals.map(appt => (
-              <div key={appt.id} className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                  {/* 🛡️ Guard against the "DDDD..." name issue */}
-                  <h3 className="font-bold text-lg break-all line-clamp-2 leading-tight text-black">
-                    {appt.full_name}
+              <div key={appt.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-md flex flex-col gap-4 animate-fade-in-up">
+                
+                {/* 1. Header: Service Type */}
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
+                    {appt.service_type === 'Other' 
+                      ? `${appt.custom_service || 'Other'}` 
+                      : appt.service_type}
                   </h3>
-                  {/* 🛡️ SYNC: Show original booking time for triage */}
-                  <span className="text-[10px] text-gray-400 font-bold italic whitespace-nowrap ml-2">
-                    Booked: {appt.created_at ? new Date(appt.created_at).toLocaleDateString() : 'N/A'}
-                  </span>
+                  
+                  {/* 2. Date and Time Icons */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs font-medium text-gray-500 mt-1">
+                    <div className="flex items-center gap-1.5 font-bold">
+                      <Calendar className="w-3.5 h-3.5 text-[#5b9bd5]" />
+                      {new Date(appt.appointment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div className="flex items-center gap-1.5 font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                      <Clock className="w-3.5 h-3.5" />
+                      {appt.preferred_time}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 truncate">
-                  {appt.service_type === 'Other' ? `Other (${appt.custom_service || 'No details'})` : appt.service_type} • {appt.preferred_time}
-                </p>
-                <div className="flex gap-3">
+
+                {/* 3. Patient Name and Metadata */}
+                <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <p className="text-sm font-black text-black">
+                     Patient: {appt.full_name}
+                  </p>
+                  <div className="text-[10px] text-gray-400 font-bold italic mt-1">
+                    Booked on: {appt.created_at ? new Date(appt.created_at).toLocaleString('en-US', { 
+                      month: 'short', day: 'numeric', year: 'numeric', 
+                      hour: 'numeric', minute: '2-digit', hour12: true 
+                    }) : 'N/A'}
+                  </div>
+                </div>
+
+                {/* 4. Action Buttons */}
+                <div className="flex gap-2">
                   <button 
-                    onClick={() => handleActionConfirm(appt.id, 'confirmed')} // 🛡️ Updated handler
-                    className="flex-1 py-2 bg-[#22c55e] text-white font-bold rounded-lg cursor-pointer border-none transition-all hover:bg-[#16a34a]"
+                    onClick={() => handleActionConfirm(appt.id, 'confirmed')}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
                   >
-                    Approve
+                    <CheckCircle className="w-4 h-4" /> Confirm
                   </button>
                   <button 
-                    onClick={() => handleActionConfirm(appt.id, 'declined')} // 🛡️ Updated handler
-                    className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg cursor-pointer border-none transition-all hover:bg-gray-200"
+                    onClick={() => handleActionConfirm(appt.id, 'declined')}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#1a1a1a] hover:bg-[#333333] text-white font-bold rounded-xl transition-all cursor-pointer border-none shadow-sm"
                   >
-                    Decline
+                    <XCircle className="w-4 h-4" /> Decline
                   </button>
                 </div>
+
               </div>
             ))}
+
           </div>
         </div>
       </div>
