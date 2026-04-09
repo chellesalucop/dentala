@@ -176,7 +176,7 @@ class AppointmentController extends Controller
         
         try {
             \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->queue(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
+                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
             \Log::info('Patient confirmation email queued successfully to dentist');
         } catch (\Exception $e) { 
             \Log::error('Confirmation Mail queueing failed: ' . $e->getMessage());
@@ -209,7 +209,7 @@ class AppointmentController extends Controller
         // � PERFORMANCE FIX: Queue cancellation email for background processing
         try {
             \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->queue(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
+                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
             \Log::info('Cancellation email queued successfully to dentist');
         } catch (\Exception $e) { 
             \Log::error("Cancellation Mail queueing failed: " . $e->getMessage());
@@ -411,7 +411,7 @@ class AppointmentController extends Controller
             $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
             $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-            Mail::to($appointment->email)->queue(new PatientNotificationMail(
+            Mail::to($appointment->email)->send(new PatientNotificationMail(
                 $appointment, 
                 $request->status, 
                 $request->cancellation_reason ?? '',

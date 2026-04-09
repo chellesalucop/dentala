@@ -47,7 +47,23 @@ services:
       - key: SESSION_DRIVER
         value: database
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp-relay.brevo.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        value: a79f53001@smtp-brevo.com
+      - key: MAIL_PASSWORD
+        sync: false  # Set this in Render Dashboard → Environment (GitHub blocks secrets in code)
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: mrasalucop01@tip.edu.ph
+      - key: MAIL_FROM_NAME
+        value: "Dentala Clinic"
 
 # Background queue worker for email processing
   - type: worker
@@ -97,6 +113,22 @@ services:
         value: database
       - key: QUEUE_CONNECTION
         value: database
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp-relay.brevo.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        value: a79f53001@smtp-brevo.com
+      - key: MAIL_PASSWORD
+        sync: false  # Set this in Render Dashboard → Environment (GitHub blocks secrets in code)
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: mrasalucop01@tip.edu.ph
+      - key: MAIL_FROM_NAME
+        value: "Dentala Clinic"
       - key: SERVICE_TYPE
         value: worker
 
