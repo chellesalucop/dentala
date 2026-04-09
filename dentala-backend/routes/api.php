@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/appointments/{id}', [AppointmentController::class, 'destroy']);
     Route::delete('/appointments/clear/{status}', [AppointmentController::class, 'clearByStatus']);
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
+    Route::patch('/appointments/{id}/confirm', [AppointmentController::class, 'confirm']);
     Route::patch('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
     
     Route::put('/user/profile', [UserController::class, 'updateProfile']);

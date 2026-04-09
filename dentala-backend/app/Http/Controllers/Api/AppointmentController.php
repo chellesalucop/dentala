@@ -104,6 +104,10 @@ class AppointmentController extends Controller
         $appointment = Appointment::create($validated);
 
             // 📧 Notify Admin & Patient
+            \Log::info('Attempting to send appointment creation emails');
+            \Log::info('Patient email: ' . $appointment->email);
+            \Log::info('Dentist email: ' . $appointment->preferred_dentist);
+            
             try {
                 $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
                 $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
@@ -111,14 +115,49 @@ class AppointmentController extends Controller
                 // 🛡️ TESTING SAFEGUARD: Only send Admin mail if email is different from patient
                 // This prevents "Double Emails" during developer testing.
                 if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
+                    \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
                     Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+                    \Log::info('Admin notification sent successfully');
                 }
                 
+                \Log::info('Sending patient notification to: ' . $appointment->email);
                 Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
-            } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
+                \Log::info('Patient notification sent successfully');
+            } catch (\Exception $e) { 
+                \Log::error('Mail failed: ' . $e->getMessage());
+                \Log::error('Trace: ' . $e->getTraceAsString());
+            }
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
 
+    }
+
+    /**
+     * For Patients: Confirm their own appointment
+     */
+    public function confirm(Request $request, $id)
+    {
+        $appointment = Appointment::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $appointment->status = 'confirmed';
+        $appointment->save();
+
+        // 📧 Notify Dentist (Admin) about patient confirmation
+        \Log::info('Attempting to send patient confirmation email to dentist: ' . $appointment->preferred_dentist);
+        
+        try {
+            \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
+                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
+            \Log::info('Patient confirmation email sent successfully to dentist');
+        } catch (\Exception $e) { 
+            \Log::error('Confirmation Mail to Admin failed: ' . $e->getMessage());
+            \Log::error('Trace: ' . $e->getTraceAsString());
+        }
+
+        return response()->json(['message' => 'Appointment confirmed successfully!']);
     }
 
     /**
@@ -337,6 +376,9 @@ class AppointmentController extends Controller
         $appointment->save();
 
         // 📧 Notify Patient
+        \Log::info('Attempting to send status update email to patient: ' . $appointment->email);
+        \Log::info('Appointment status: ' . $request->status);
+        
         try {
             $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
             $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
@@ -347,7 +389,11 @@ class AppointmentController extends Controller
                 $request->cancellation_reason ?? '',
                 $dentistName
             ));
-        } catch (\Exception $e) { \Log::error("Mail failed: " . $e->getMessage()); }
+            \Log::info('Status update email sent successfully to patient');
+        } catch (\Exception $e) { 
+            \Log::error('Mail failed: ' . $e->getMessage());
+            \Log::error('Trace: ' . $e->getTraceAsString());
+        }
 
         return response()->json([
             'message' => "Appointment marked as {$request->status}.", 

@@ -28,6 +28,7 @@ class AdminNotificationMail extends Mailable
             'New Booking'         => 'Action Required: New Booking Request',
             'Reschedule Request'  => 'Action Required: Appointment Rescheduled',
             'Patient Cancellation' => 'Alert: Appointment Cancelled by Patient',
+            'Patient Confirmed'   => 'Alert: Patient Confirmed Appointment',
         ];
 
         $subject = $subjects[$this->statusType] ?? 'Admin Appointment Update';
