@@ -10,6 +10,7 @@ use App\Mail\AdminNotificationMail;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Artisan;
 // 🛡️ THE CRITICAL MISSING PIECE: Add this exact line at the top
 use Illuminate\Support\Str;
 

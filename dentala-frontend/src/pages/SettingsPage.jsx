@@ -111,8 +111,10 @@ export default function SettingsPage() {
       });
 
       const data = await response.json();
+      console.log('🔍 Backend response:', data);
       if (response.ok) {
         // 🛡️ PERSISTENCE FIX: Update localStorage and trigger sync across all tabs
+        console.log('🔍 User data from backend:', data.user);
         storage.setUser(data.user);
         setUser(data.user);
         
