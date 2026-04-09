@@ -104,12 +104,14 @@ class AppointmentController extends Controller
         $appointment = Appointment::create($validated);
 
             // Notify Admin & Patient (Gmail SMTP)
-            \Log::info('Attempting to send appointment creation emails');
+            $startTime = microtime(true);
+            \Log::info('Starting email sending process at: ' . $startTime);
             \Log::info('Patient email: ' . $appointment->email);
             \Log::info('Dentist email: ' . $appointment->preferred_dentist);
             \Log::info('Gmail config: ' . env('MAIL_MAILER') . ' @ ' . env('MAIL_HOST'));
             
             try {
+                $emailStartTime = microtime(true);
                 $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
                 $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
@@ -124,10 +126,15 @@ class AppointmentController extends Controller
                 \Log::info('Sending patient notification to: ' . $appointment->email);
                 Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
                 \Log::info('Patient notification sent successfully');
+                $emailEndTime = microtime(true);
+                \Log::info('Email sending completed in: ' . ($emailEndTime - $emailStartTime) . ' seconds');
             } catch (\Exception $e) { 
                 \Log::error('Mail failed: ' . $e->getMessage());
                 \Log::error('Trace: ' . $e->getTraceAsString());
             }
+            
+            $totalTime = microtime(true) - $startTime;
+            \Log::info('Total appointment creation time: ' . $totalTime . ' seconds');
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
 
