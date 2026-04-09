@@ -23,7 +23,8 @@ class AppointmentController extends Controller
         $user = $request->user();
         if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
 
-        $this->autoExpireAppointments(); // 🛡️ Run Janitor for patient's view too
+        // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
+        // This should be handled by a scheduled job instead
 
         // 🛡️ PATIENT FULL IDENTITY PAYLOAD: Include profile photo and booking email
         $appointments = Appointment::where('appointments.user_id', $user->id)
@@ -190,7 +191,8 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Access Denied.'], 403);
         }
 
-        $this->autoExpireAppointments($user->email); // 🛡️ Run Janitor
+        // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
+        // This should be handled by a scheduled job instead
 
         // 🛡️ ADMIN STRENGTH: Include all fields for comprehensive appointment management
         // 🔄 CHRONOLOGICAL QUEUE: Two-tier sorting for admin workflow
@@ -221,8 +223,8 @@ class AppointmentController extends Controller
         $user = $request->user();
         if ($user->role !== 'admin') return response()->json(['message' => 'Access Denied.'], 403);
 
-        // 🛡️ THE CRITICAL PARAMETER FIX: Pass the authenticated admin's email
-        $this->autoExpireAppointments($user->email); 
+        // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
+        // This should be handled by a scheduled job instead 
 
         // Use the imported Carbon class correctly
         $today = \Carbon\Carbon::today()->toDateString();
@@ -526,7 +528,6 @@ class AppointmentController extends Controller
      * 🛡️ THE JANITOR: Automatically expires pending appointments that are past due
      */
     private function autoExpireAppointments($dentistEmail = null)
-
     {
         $now = \Carbon\Carbon::now();
         $today = $now->toDateString();
@@ -541,7 +542,8 @@ class AppointmentController extends Controller
             $query->whereRaw('LOWER(preferred_dentist) = ?', [strtolower($dentistEmail)]);
         }
 
-        // THE FIX: Capture appointments BEFORE update so we can notify them
+        // PERFORMANCE FIX: Only check for expired appointments, don't send emails here
+        // Email sending for expired appointments should be handled by a scheduled job
         $toExpire = $query->where(function ($q) use ($today, $currentTime) {
             $q->where('appointment_date', '<', $today) // Any date before today
                   ->orWhere(function ($sub) use ($today, $currentTime) {
@@ -551,23 +553,15 @@ class AppointmentController extends Controller
         })->get(); 
 
         if ($toExpire->isNotEmpty()) {
-            // Perform mass update
+            // Perform mass update without email sending (much faster)
             Appointment::whereIn('id', $toExpire->pluck('id'))->update([
                 'status' => 'expired',
                 'updated_at' => now(),
                 'cancellation_reason' => 'Automatically expired: Appointment time has passed without clinic action.'
             ]);
-
-            // 📧 Notify Patients
-            foreach ($toExpire as $appointment) {
-                try {
-                    $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-                    $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
-
-                    \Illuminate\Support\Facades\Mail::to($appointment->email)
-                        ->send(new PatientNotificationMail($appointment, 'expired', '', $dentistName));
-                } catch (\Exception $e) { \Log::error("Expire Mail failed: " . $e->getMessage()); }
-            }
+            
+            // Log expired appointments for debugging
+            \Log::info("Expired " . $toExpire->count() . " appointments without email notifications");
         }
     }
 }
