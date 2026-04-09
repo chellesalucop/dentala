@@ -7,7 +7,6 @@ use App\Models\Appointment;
 use App\Mail\WalkinReceiptMail;
 use App\Mail\PatientNotificationMail;
 use App\Mail\AdminNotificationMail;
-use App\Jobs\SendAppointmentEmailJob;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -104,28 +103,31 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::create($validated);
 
-            // Notify Admin & Patient (Async - No Timeout)
-            \Log::info('Dispatching appointment creation emails to queue');
+            // Notify Admin & Patient (Gmail SMTP)
+            \Log::info('Attempting to send appointment creation emails');
             \Log::info('Patient email: ' . $appointment->email);
             \Log::info('Dentist email: ' . $appointment->preferred_dentist);
-            \Log::info('Brevo key loaded: ' . (env('BREVO_API_KEY') ? 'YES' : 'NO'));
-            \Log::info('Mail config: ' . env('MAIL_MAILER') . ' @ ' . env('MAIL_HOST'));
+            \Log::info('Gmail config: ' . env('MAIL_MAILER') . ' @ ' . env('MAIL_HOST'));
             
-            // Get dentist name for both emails
-            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            try {
+                $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+                $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-            // Dispatch admin email job (only if different from patient)
-            if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
-                \Log::info('Dispatching admin notification job to: ' . $appointment->preferred_dentist);
-                SendAppointmentEmailJob::dispatch($appointment, 'admin', $appointment->preferred_dentist, 'New Booking');
+                // TESTING SAFEGUARD: Only send Admin mail if email is different from patient
+                // This prevents "Double Emails" during developer testing.
+                if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
+                    \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
+                    Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+                    \Log::info('Admin notification sent successfully');
+                }
+                
+                \Log::info('Sending patient notification to: ' . $appointment->email);
+                Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+                \Log::info('Patient notification sent successfully');
+            } catch (\Exception $e) { 
+                \Log::error('Mail failed: ' . $e->getMessage());
+                \Log::error('Trace: ' . $e->getTraceAsString());
             }
-            
-            // Dispatch patient email job
-            \Log::info('Dispatching patient notification job to: ' . $appointment->email);
-            SendAppointmentEmailJob::dispatch($appointment, 'patient', $appointment->email, 'pending', '', $dentistName);
-            
-            \Log::info('Email jobs dispatched successfully - no blocking');
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
 
