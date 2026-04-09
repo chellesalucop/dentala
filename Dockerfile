@@ -50,6 +50,6 @@ RUN php artisan storage:link
 # Expose port
 EXPOSE 10000
 
-# Start Laravel server
-CMD php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=10000
+# Start either web server or queue worker based on environment variable
+CMD sh -c "if [ \"\$SERVICE_TYPE\" = \"worker\" ]; then php artisan optimize:clear && php artisan queue:work --sleep=3 --tries=3 --timeout=60 --memory=128; else php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=10000; fi"
 

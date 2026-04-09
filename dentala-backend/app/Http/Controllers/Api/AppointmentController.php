@@ -103,38 +103,27 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::create($validated);
 
-            // Notify Admin & Patient (Gmail SMTP)
-            $startTime = microtime(true);
-            \Log::info('Starting email sending process at: ' . $startTime);
-            \Log::info('Patient email: ' . $appointment->email);
-            \Log::info('Dentist email: ' . $appointment->preferred_dentist);
-            \Log::info('Gmail config: ' . env('MAIL_MAILER') . ' @ ' . env('MAIL_HOST'));
-            
-            try {
-                $emailStartTime = microtime(true);
-                $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-                $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+        // 🚀 PERFORMANCE FIX: Queue emails for background processing
+        // This prevents the 1-minute wait time for users
+        try {
+            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
+            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-                // TESTING SAFEGUARD: Only send Admin mail if email is different from patient
-                // This prevents "Double Emails" during developer testing.
-                if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
-                    \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
-                    Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
-                    \Log::info('Admin notification sent successfully');
-                }
-                
-                \Log::info('Sending patient notification to: ' . $appointment->email);
-                Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
-                \Log::info('Patient notification sent successfully');
-                $emailEndTime = microtime(true);
-                \Log::info('Email sending completed in: ' . ($emailEndTime - $emailStartTime) . ' seconds');
-            } catch (\Exception $e) { 
-                \Log::error('Mail failed: ' . $e->getMessage());
-                \Log::error('Trace: ' . $e->getTraceAsString());
+            // Queue admin notification (if different from patient email)
+            if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
+                \Log::info('Queueing admin notification to: ' . $appointment->preferred_dentist);
+                Mail::to($appointment->preferred_dentist)->queue(new AdminNotificationMail($appointment, 'New Booking'));
             }
             
-            $totalTime = microtime(true) - $startTime;
-            \Log::info('Total appointment creation time: ' . $totalTime . ' seconds');
+            // Queue patient notification
+            \Log::info('Queueing patient notification to: ' . $appointment->email);
+            Mail::to($appointment->email)->queue(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+            
+            \Log::info('Emails queued successfully for background processing');
+        } catch (\Exception $e) { 
+            \Log::error('Mail queueing failed: ' . $e->getMessage());
+            // Continue even if email fails - appointment is still saved
+        }
 
         return response()->json(['message' => 'Appointment booked successfully!', 'appointment' => $appointment], 201);
 
@@ -153,16 +142,16 @@ class AppointmentController extends Controller
         $appointment->status = 'confirmed';
         $appointment->save();
 
-        // 📧 Notify Dentist (Admin) about patient confirmation
-        \Log::info('Attempting to send patient confirmation email to dentist: ' . $appointment->preferred_dentist);
+        // � PERFORMANCE FIX: Queue confirmation email for background processing
+        \Log::info('Queueing patient confirmation email to dentist: ' . $appointment->preferred_dentist);
         
         try {
             \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
-            \Log::info('Patient confirmation email sent successfully to dentist');
+                ->queue(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
+            \Log::info('Patient confirmation email queued successfully to dentist');
         } catch (\Exception $e) { 
-            \Log::error('Confirmation Mail to Admin failed: ' . $e->getMessage());
-            \Log::error('Trace: ' . $e->getTraceAsString());
+            \Log::error('Confirmation Mail queueing failed: ' . $e->getMessage());
+            // Continue even if email fails - confirmation is still saved
         }
 
         return response()->json(['message' => 'Appointment confirmed successfully!']);
@@ -188,12 +177,14 @@ class AppointmentController extends Controller
         $appointment->cancellation_reason = $request->cancellation_reason;
         $appointment->save();
 
-        // 📧 THE MISSING PIECE: Notify the Dentist (Admin)
+        // � PERFORMANCE FIX: Queue cancellation email for background processing
         try {
             \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
+                ->queue(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
+            \Log::info('Cancellation email queued successfully to dentist');
         } catch (\Exception $e) { 
-            \Log::error("Cancellation Mail to Admin failed: " . $e->getMessage()); 
+            \Log::error("Cancellation Mail queueing failed: " . $e->getMessage());
+            // Continue even if email fails - cancellation is still saved
         }
 
         return response()->json(['message' => 'Appointment cancelled successfully.']);
@@ -383,24 +374,24 @@ class AppointmentController extends Controller
         $appointment->touch();
         $appointment->save();
 
-        // 📧 Notify Patient
-        \Log::info('Attempting to send status update email to patient: ' . $appointment->email);
+        // � PERFORMANCE FIX: Queue status update email for background processing
+        \Log::info('Queueing status update email to patient: ' . $appointment->email);
         \Log::info('Appointment status: ' . $request->status);
         
         try {
             $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
             $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-            Mail::to($appointment->email)->send(new PatientNotificationMail(
+            Mail::to($appointment->email)->queue(new PatientNotificationMail(
                 $appointment, 
                 $request->status, 
                 $request->cancellation_reason ?? '',
                 $dentistName
             ));
-            \Log::info('Status update email sent successfully to patient');
+            \Log::info('Status update email queued successfully for background processing');
         } catch (\Exception $e) { 
-            \Log::error('Mail failed: ' . $e->getMessage());
-            \Log::error('Trace: ' . $e->getTraceAsString());
+            \Log::error('Mail queueing failed: ' . $e->getMessage());
+            // Continue even if email fails - status update is still saved
         }
 
         return response()->json([

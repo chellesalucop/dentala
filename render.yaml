@@ -49,6 +49,57 @@ services:
       - key: QUEUE_CONNECTION
         value: database
 
+# Background queue worker for email processing
+  - type: worker
+    name: dentala-queue-worker
+    env: docker
+    repo: https://github.com/chellesalucop/dentala.git
+    rootDir: .
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        value: https://dentala-ndex.onrender.com
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: dentala-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: dentala-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: dentala-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: dentala-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: dentala-db
+          property: password
+      - key: CACHE_DRIVER
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SERVICE_TYPE
+        value: worker
+
 databases:
   - name: dentala-db
     databaseName: dentala_db

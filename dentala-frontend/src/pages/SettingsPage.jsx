@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const [errors, setErrors] = useState({});
   const token = localStorage.getItem('auth_token');
 
-  // Load user data on mount
+  // 🛡️ PERSISTENCE FIX: Enhanced user data loading with HMO data
   useEffect(() => {
     const userString = localStorage.getItem('user');
     if (userString) {
@@ -34,7 +34,8 @@ export default function SettingsPage() {
         name: userData.name || '',
         phone: userData.phone || '',
         email: userData.email || '',
-        specialization: userData.specialization || ''
+        specialization: userData.specialization || '',
+        hmo_provider: userData.hmo_provider || 'None'
       }));
 
       if (userData.profile_photo_path) {
@@ -43,10 +44,6 @@ export default function SettingsPage() {
       if (userData.hmo_card_path) {
         setHmoPreview(getProfilePhotoUrl(userData.hmo_card_path));
       }
-      setFormData(prev => ({
-        ...prev,
-        hmo_provider: userData.hmo_provider || 'None'
-      }));
     }
   }, []);
 
@@ -115,10 +112,25 @@ export default function SettingsPage() {
 
       const data = await response.json();
       if (response.ok) {
+        // 🛡️ PERSISTENCE FIX: Update localStorage and trigger sync across all tabs
         localStorage.setItem('user', JSON.stringify(data.user));
         setUser(data.user);
+        
+        // 🛡️ CROSS-TAB SYNC: Broadcast update to other tabs
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(data.user)
+        }));
+        
         alert("Profile updated successfully!");
-        window.location.reload(); // Refresh to sync everywhere
+        // 🛡️ SOFT REFRESH: Update form data instead of full page reload
+        setFormData(prev => ({
+          ...prev,
+          name: data.user.name || '',
+          phone: data.user.phone || '',
+          email: data.user.email || '',
+          hmo_provider: data.user.hmo_provider || 'None'
+        }));
       } else if (data.errors) {
         setErrors(data.errors);
       } else {
@@ -184,6 +196,13 @@ export default function SettingsPage() {
         const data = await response.json();
         localStorage.setItem('user', JSON.stringify(data.user));
         setPreview(getProfilePhotoUrl(data.user.profile_photo_path));
+        
+        // 🛡️ CROSS-TAB SYNC: Broadcast update to other tabs
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(data.user)
+        }));
+        
         alert("Profile photo updated successfully!");
       } else {
         alert("Failed to upload image.");
@@ -220,6 +239,13 @@ export default function SettingsPage() {
         const data = await response.json();
         localStorage.setItem('user', JSON.stringify(data.user));
         setHmoPreview(getProfilePhotoUrl(data.user.hmo_card_path));
+        
+        // 🛡️ CROSS-TAB SYNC: Broadcast update to other tabs
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'user',
+          newValue: JSON.stringify(data.user)
+        }));
+        
         alert("HMO Card updated successfully!");
       } else {
         alert("Failed to upload HMO Card.");
