@@ -1,0 +1,14 @@
+config:
+  target: "https://dentala-ndex.onrender.com"
+  phases:
+    # Ramp up: Start at 1 user/sec, increase to 20 users/sec over 60 seconds
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 20
+      name: "Capacity Finding Ramp Up"
+
+scenarios:
+  - name: "Health Check Walk"
+    flow:
+      - get:
+          url: "/api/health"

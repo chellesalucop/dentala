@@ -1,0 +1,25 @@
+config:
+  target: "https://dentala-ndex.onrender.com"
+  phases:
+    # Phase 1: Warm up the Render server (prevent cold-start crashes)
+    - duration: 20
+      arrivalRate: 2
+      name: "Warm up (2 requests/sec)"
+      
+    # Phase 2: Moderate Load (50 Users)
+    - duration: 30
+      arrivalRate: 50
+      name: "Sustained Load (50 concurrent users)"
+
+    # Phase 3: Peak Load (100 Users)
+    - duration: 30
+      arrivalRate: 100
+      name: "Peak Load (100 concurrent users)"
+
+scenarios:
+  - name: "Browsing the API"
+    flow:
+      - get:
+          url: "/api/health"
+      - get:
+          url: "/api/dentists"

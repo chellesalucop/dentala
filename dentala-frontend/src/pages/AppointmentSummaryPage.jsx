@@ -12,7 +12,7 @@ export default function AppointmentSummaryPage() {
   // Handle Edit - Send data back to form page
   const handleEdit = () => {
     // We send the current formData back to the form page
-    navigate('/appointment', { state: { formData } }); 
+    navigate('/appointment', { state: { formData } });
   };
 
   if (!formData) {
@@ -24,7 +24,7 @@ export default function AppointmentSummaryPage() {
     const fetchDentists = async () => {
       try {
         const response = await fetch(`${API_URL}/api/dentists`, {
-          headers: { 
+          headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
             'Accept': 'application/json'
           }
@@ -42,8 +42,8 @@ export default function AppointmentSummaryPage() {
   }, []);
 
   // 🛡️ REVERSE LOOKUP: Find name that belongs to stored email
-  const displayDentistName = dentists.find(d => d.email === formData.preferredDentist)?.name 
-                             || "Not Selected";
+  const displayDentistName = dentists.find(d => d.email === formData.preferredDentist)?.name
+    || "Not Selected";
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -55,10 +55,10 @@ export default function AppointmentSummaryPage() {
       phone: formData.phone, // Must be 11 digits to pass backend
       email: formData.email, // Must be valid email format
       service_type: formData.serviceType, // Will be "Other"
-      
+
       // ✅ NEW CORRECTED LINE: Keep medical notes strictly as medical notes
       others: formData.others, // Only medical condition notes
-      
+
       preferred_dentist: formData.preferredDentist,
       // Ensure medical_conditions is always an array to avoid 422
       medical_conditions: Array.isArray(formData.medicalConditions) ? formData.medicalConditions : [],
@@ -76,7 +76,7 @@ export default function AppointmentSummaryPage() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`, 
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -108,11 +108,11 @@ export default function AppointmentSummaryPage() {
     <div className="max-w-2xl mx-auto p-4 md:p-8 text-black text-left">
       <h1 className="text-xl font-bold mb-1 text-gray-800">Appointment Summary</h1>
       <p className="text-sm text-gray-500 mb-6 font-medium">Review the details of your dental appointment before confirming your schedule.</p>
-      
+
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 space-y-8">
         <div className="flex items-center gap-2 font-bold text-lg border-b pb-2 text-gray-800">
-           <img src="/images/calendar.png" alt="" className="w-5 h-5 opacity-70" />
-           Appointment Details
+          <img src="/images/calendar.png" alt="" className="w-5 h-5 opacity-70" />
+          Appointment Details
         </div>
 
         {/* 1. Personal Information */}
@@ -178,7 +178,7 @@ export default function AppointmentSummaryPage() {
                 <p className="text-sm text-black italic">{condition}</p>
               </div>
             ))}
-            
+
             {/* 🛡️ GUARD: Only apply 'others' notes to Medical Condition section */}
             {formData.medicalConditions.includes("Others (please specify)") && (
               <div className="mt-2 ml-4">
@@ -206,9 +206,9 @@ export default function AppointmentSummaryPage() {
           <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg animate-fade-in shadow-sm">
             <div className="flex gap-3 items-start">
               <div className="bg-amber-100 p-1 rounded-full text-amber-600">
-                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                 </svg>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
               </div>
               <p className="text-sm text-amber-800 font-bold leading-tight">
                 Important: Please bring your physical <span className="underline">{formData.hmoProvider}</span> HMO card in your scheduled Appointment for verification.
@@ -218,14 +218,14 @@ export default function AppointmentSummaryPage() {
         )}
 
         <div className="flex gap-4 pt-4">
-          <button 
-            onClick={handleEdit} 
+          <button
+            onClick={handleEdit}
             className="flex-1 py-3.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition shadow-sm border border-gray-200"
           >
             Edit Details
           </button>
-          <button 
-            onClick={handleConfirm} 
+          <button
+            onClick={handleConfirm}
             disabled={isLoading}
             className="flex-1 py-3.5 bg-[#5b9bd5] text-white font-bold rounded-lg hover:bg-[#4a8ac4] transition shadow-md disabled:bg-gray-400"
           >
