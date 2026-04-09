@@ -132,7 +132,7 @@ class UserController extends Controller
             
             // 🛡️ SECURE SIGNATURE: Ensures only your server can upload to your account
             // Alphabetical order of parameters is required for the signature string
-            $paramsToSign = "folder=profile_photos&timestamp={$timestamp}{$apiSecret}";
+            $paramsToSign = "folder=Dentala/profile_photos&timestamp={$timestamp}{$apiSecret}";
             $signature = sha1($paramsToSign);
 
             // 🚀 ZERO-DEPENDENCY UPLOAD: Use built-in Laravel Http client
@@ -144,7 +144,7 @@ class UserController extends Controller
                 'api_key' => $apiKey,
                 'timestamp' => $timestamp,
                 'signature' => $signature,
-                'folder' => 'profile_photos'
+                'folder' => 'Dentala/profile_photos'
             ]);
 
             if (!$response->successful()) {
@@ -257,7 +257,7 @@ class UserController extends Controller
         try {
             $file = $request->file('image');
             $timestamp = time();
-            $paramsToSign = "folder=hmo_cards&timestamp={$timestamp}{$apiSecret}";
+            $paramsToSign = "folder=Dentala/hmo_cards&timestamp={$timestamp}{$apiSecret}";
             $signature = sha1($paramsToSign);
 
             $response = \Illuminate\Support\Facades\Http::attach(
@@ -268,7 +268,7 @@ class UserController extends Controller
                 'api_key' => $apiKey,
                 'timestamp' => $timestamp,
                 'signature' => $signature,
-                'folder' => 'hmo_cards'
+                'folder' => 'Dentala/hmo_cards'
             ]);
 
             if (!$response->successful()) {
