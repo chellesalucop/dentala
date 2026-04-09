@@ -115,23 +115,17 @@ class AppointmentController extends Controller
             \Log::info('Email configuration - Username: ' . config('mail.mailers.smtp.username'));
             \Log::info('Email configuration - From: ' . config('mail.from.address'));
 
-            // Queue admin notification (if different from patient email)
+            // Send admin notification (if different from patient email)
             if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
-                \Log::info('Queueing admin notification to: ' . $appointment->preferred_dentist);
-                Mail::to($appointment->preferred_dentist)->queue(new AdminNotificationMail($appointment, 'New Booking'));
-                \Log::info('Admin notification queued successfully');
+                \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
+                Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+                \Log::info('Admin notification sent successfully');
             }
             
-            // Queue patient notification
-            \Log::info('Queueing patient notification to: ' . $appointment->email);
-            Mail::to($appointment->email)->queue(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
-            \Log::info('Patient notification queued successfully');
-            
-            // 🧪 TEMPORARY: Process queue immediately for testing
-            if (config('queue.default') === 'database') {
-                \Log::info('Processing queue immediately for testing');
-                Artisan::call('queue:work', ['--once']);
-            }
+            // Send patient notification
+            \Log::info('Sending patient notification to: ' . $appointment->email);
+            Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+            \Log::info('Patient notification sent successfully');
             
             \Log::info('Emails queued successfully for background processing');
         } catch (\Exception $e) { 
