@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { API_URL } from '../api';
+import { storage } from '../utils/localStorage';
 
 export default function AppointmentFormPage() {
   const navigate = useNavigate();
@@ -17,25 +18,23 @@ export default function AppointmentFormPage() {
   const [takenSlots, setTakenSlots] = useState([]); // Blacklisted time slots
 
   // 🛡️ DENTAL DATA HYDRATION: Pre-fill from profile if logged in
-  // 🛡️ PERSISTENCE FIX: Enhanced user data loading with HMO data
+  // 🛡️ PERSISTENCE FIX: Enhanced user data loading with HMO data and cross-tab sync
   useEffect(() => {
-    const userString = localStorage.getItem('user');
-    if (userString) {
-      const userData = JSON.parse(userString);
+    const user = storage.getUser();
+    if (user) {
       setFormData(prev => ({
         ...prev,
-        fullName: userData.name || '',
-        phone: userData.phone || '',
-        email: userData.email || '',
-        hmoProvider: userData.hmo_provider || 'None',
-        hmoCardPath: userData.hmo_card_path || null
+        fullName: user.name || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        hmoProvider: user.hmo_provider || 'None',
+        hmoCardPath: user.hmo_card_path || null
       }));
     }
   }, []);
 
   const getInitialFormData = () => {
-    const userString = localStorage.getItem('user');
-    const user = userString ? JSON.parse(userString) : null;
+    const user = storage.getUser();
     
     // 🛡️ PERSISTENCE FIX: Always prioritize user data over location state
     const baseData = {

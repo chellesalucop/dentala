@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL, getProfilePhotoUrl } from '../api';
+import { storage } from '../utils/localStorage';
 import { Camera, User as UserIcon } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -23,26 +24,25 @@ export default function SettingsPage() {
   const [errors, setErrors] = useState({});
   const token = localStorage.getItem('auth_token');
 
-  // 🛡️ PERSISTENCE FIX: Enhanced user data loading with HMO data
+  // 🛡️ PERSISTENCE FIX: Enhanced user data loading with HMO data and cross-tab sync
   useEffect(() => {
-    const userString = localStorage.getItem('user');
-    if (userString) {
-      const userData = JSON.parse(userString);
-      setUser(userData);
+    const user = storage.getUser();
+    if (user) {
+      setUser(user);
       setFormData(prev => ({
         ...prev,
-        name: userData.name || '',
-        phone: userData.phone || '',
-        email: userData.email || '',
-        specialization: userData.specialization || '',
-        hmo_provider: userData.hmo_provider || 'None'
+        name: user.name || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        specialization: user.specialization || '',
+        hmo_provider: user.hmo_provider || 'None'
       }));
 
-      if (userData.profile_photo_path) {
-        setPreview(getProfilePhotoUrl(userData.profile_photo_path));
+      if (user.profile_photo_path) {
+        setPreview(getProfilePhotoUrl(user.profile_photo_path));
       }
-      if (userData.hmo_card_path) {
-        setHmoPreview(getProfilePhotoUrl(userData.hmo_card_path));
+      if (user.hmo_card_path) {
+        setHmoPreview(getProfilePhotoUrl(user.hmo_card_path));
       }
     }
   }, []);
@@ -113,14 +113,8 @@ export default function SettingsPage() {
       const data = await response.json();
       if (response.ok) {
         // 🛡️ PERSISTENCE FIX: Update localStorage and trigger sync across all tabs
-        localStorage.setItem('user', JSON.stringify(data.user));
+        storage.setUser(data.user);
         setUser(data.user);
-        
-        // 🛡️ CROSS-TAB SYNC: Broadcast update to other tabs
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'user',
-          newValue: JSON.stringify(data.user)
-        }));
         
         alert("Profile updated successfully!");
         // 🛡️ SOFT REFRESH: Update form data instead of full page reload
@@ -194,14 +188,8 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('user', JSON.stringify(data.user));
+        storage.setUser(data.user);
         setPreview(getProfilePhotoUrl(data.user.profile_photo_path));
-        
-        // 🛡️ CROSS-TAB SYNC: Broadcast update to other tabs
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'user',
-          newValue: JSON.stringify(data.user)
-        }));
         
         alert("Profile photo updated successfully!");
       } else {
@@ -237,14 +225,8 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('user', JSON.stringify(data.user));
+        storage.setUser(data.user);
         setHmoPreview(getProfilePhotoUrl(data.user.hmo_card_path));
-        
-        // 🛡️ CROSS-TAB SYNC: Broadcast update to other tabs
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'user',
-          newValue: JSON.stringify(data.user)
-        }));
         
         alert("HMO Card updated successfully!");
       } else {
