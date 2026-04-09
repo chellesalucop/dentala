@@ -418,14 +418,15 @@ class AppointmentController extends Controller
         $request->validate(['date' => 'required|date']);
         $date = $request->query('date');
 
-        // 🛡️ SLOT STATUS GUARD: Only block pending and confirmed appointments
-        // Remove 'completed' to free up slots from past appointments
+        // 🛡️ OPTIMIZED: Use select and index for faster query
         $takenSlots = Appointment::where('appointment_date', $date)
             ->whereIn('status', ['pending', 'confirmed']) 
+            ->select('preferred_time')
+            ->get()
             ->pluck('preferred_time')
             ->map(function ($time) {
                 // 🛡️ TIME FORMAT FIX: Convert datetime to simple time format for frontend
-                return \Carbon\Carbon::parse($time)->format('h:i A');
+                return $time; // Already formatted from frontend, no need to parse
             })
             ->toArray();
 

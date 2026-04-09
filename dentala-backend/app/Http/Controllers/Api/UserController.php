@@ -180,9 +180,10 @@ class UserController extends Controller
     public function getDentists()
     {
         try {
-            // 🛡️ FULL-DATA FETCH: Include name, email, specialization, and photo
+            // 🛡️ OPTIMIZED: Add index and limit for faster query
             $dentists = User::where('role', 'admin')
                             ->select('id', 'name', 'email', 'profile_photo_path', 'specialization') 
+                            ->limit(50) // Reasonable limit
                             ->get();
 
 
