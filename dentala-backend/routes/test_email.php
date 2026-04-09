@@ -12,27 +12,25 @@ Route::get('/test-email', function () {
             'host' => env('MAIL_HOST', 'not set'),
             'port' => env('MAIL_PORT', 'not set'),
             'username' => env('MAIL_USERNAME', 'not set'),
+            'password' => env('MAIL_PASSWORD') ? 'SET' : 'NOT SET',
             'encryption' => env('MAIL_ENCRYPTION', 'not set'),
             'from_address' => env('MAIL_FROM_ADDRESS', 'not set'),
             'from_name' => env('MAIL_FROM_NAME', 'not set'),
         ];
         
-        // Create a simple test email
-        $testEmail = new \stdClass();
-        $testEmail->to = 'test@example.com';
-        $testEmail->subject = 'Dentala Email Test';
-        $testEmail->body = 'This is a test email from Dentala application.';
+        // Test with actual recipient email
+        $recipientEmail = 'poculas.nna@gmail.com'; // Use your actual email for testing
         
         // Try to send email
-        Mail::raw('This is a test email from Dentala application.', function ($message) {
-            $message->to('test@example.com')
-                   ->subject('Dentala Email Test')
+        Mail::raw('This is a test email from Dentala application. If you receive this, Brevo configuration is working!', function ($message) use ($recipientEmail) {
+            $message->to($recipientEmail)
+                   ->subject('Dentala Email Test - Brevo Configuration')
                    ->from(env('MAIL_FROM_ADDRESS', 'noreply@dentala.com'), env('MAIL_FROM_NAME', 'Dentala'));
         });
         
         return response()->json([
             'status' => 'success',
-            'message' => 'Test email sent successfully',
+            'message' => 'Test email sent successfully to ' . $recipientEmail,
             'config' => $config
         ]);
         
