@@ -21,8 +21,13 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
+        // 🚀 PERFORMANCE LOGGING: Track query execution time
+        $startTime = microtime(true);
+        
         $user = $request->user();
         if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+        \Log::info('appointments/index: Starting query for user ' . $user->id);
 
         // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
         // This should be handled by a scheduled job instead
@@ -36,6 +41,11 @@ class AppointmentController extends Controller
                 'users.profile_photo_path', 
                 'users.email as user_email'
             ]);
+
+        $endTime = microtime(true);
+        $executionTime = ($endTime - $startTime) * 1000; // Convert to milliseconds
+        
+        \Log::info("appointments/index: Query completed in {$executionTime}ms, found " . count($appointments) . " appointments");
 
         return response()->json($appointments);
     }

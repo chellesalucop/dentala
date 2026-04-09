@@ -180,16 +180,25 @@ class UserController extends Controller
     public function getDentists()
     {
         try {
-            // 🛡️ OPTIMIZED: Add index and limit for faster query
+            // � PERFORMANCE LOGGING: Track query execution time
+            $startTime = microtime(true);
+            
+            \Log::info('getDentists: Starting query');
+            
+            // �🛡️ OPTIMIZED: Add index and limit for faster query
             $dentists = User::where('role', 'admin')
                             ->select('id', 'name', 'email', 'profile_photo_path', 'specialization') 
                             ->limit(50) // Reasonable limit
                             ->get();
 
-
+            $endTime = microtime(true);
+            $executionTime = ($endTime - $startTime) * 1000; // Convert to milliseconds
+            
+            \Log::info("getDentists: Query completed in {$executionTime}ms, found " . count($dentists) . " dentists");
 
             return response()->json(['dentists' => $dentists], 200);
         } catch (\Exception $e) {
+            \Log::error('getDentists: Error - ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
