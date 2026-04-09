@@ -127,10 +127,10 @@ class AppointmentController extends Controller
 
             // Send admin notification (if different from patient email)
             if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
-                \Log::info('Queueing admin notification to: ' . $appointment->preferred_dentist);
+                \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
                 try {
-                    Mail::to($appointment->preferred_dentist)->queue(new AdminNotificationMail($appointment, 'New Booking'));
-                    \Log::info('Admin notification queued successfully to: ' . $appointment->preferred_dentist);
+                    Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+                    \Log::info('Admin notification sent successfully to: ' . $appointment->preferred_dentist);
                 } catch (\Exception $e) {
                     \Log::error('Admin notification failed: ' . $e->getMessage());
                     \Log::error('Admin notification error trace: ' . $e->getTraceAsString());
@@ -138,10 +138,10 @@ class AppointmentController extends Controller
             }
             
             // Send patient notification
-            \Log::info('Queueing patient notification to: ' . $appointment->email);
+            \Log::info('Sending patient notification to: ' . $appointment->email);
             try {
-                Mail::to($appointment->email)->queue(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
-                \Log::info('Patient notification queued successfully to: ' . $appointment->email);
+                Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+                \Log::info('Patient notification sent successfully to: ' . $appointment->email);
             } catch (\Exception $e) {
                 \Log::error('Patient notification failed: ' . $e->getMessage());
                 \Log::error('Patient notification error trace: ' . $e->getTraceAsString());
