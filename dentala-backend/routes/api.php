@@ -15,6 +15,53 @@ Route::get('/health', function () {
     ]);
 });
 
+// 🔧 TEMPORARY: Email diagnostic endpoint - remove after confirming emails work
+Route::get('/test-email-diagnostic', function () {
+    $diagnostics = [
+        'timestamp' => now()->toISOString(),
+        'mail_config' => [
+            'mailer' => config('mail.default'),
+            'host' => config('mail.mailers.smtp.host'),
+            'port' => config('mail.mailers.smtp.port'),
+            'encryption' => config('mail.mailers.smtp.encryption'),
+            'username' => config('mail.mailers.smtp.username'),
+            'password_set' => !empty(config('mail.mailers.smtp.password')),
+            'password_length' => strlen(config('mail.mailers.smtp.password') ?? ''),
+            'from_address' => config('mail.from.address'),
+            'from_name' => config('mail.from.name'),
+            'queue_connection' => config('queue.default'),
+        ],
+        'env_check' => [
+            'MAIL_MAILER' => env('MAIL_MAILER', 'NOT SET'),
+            'MAIL_HOST' => env('MAIL_HOST', 'NOT SET'),
+            'MAIL_PORT' => env('MAIL_PORT', 'NOT SET'),
+            'MAIL_USERNAME' => env('MAIL_USERNAME', 'NOT SET'),
+            'MAIL_PASSWORD_SET' => !empty(env('MAIL_PASSWORD')),
+            'MAIL_ENCRYPTION' => env('MAIL_ENCRYPTION', 'NOT SET'),
+            'MAIL_FROM_ADDRESS' => env('MAIL_FROM_ADDRESS', 'NOT SET'),
+        ],
+    ];
+
+    // Try sending a real test email
+    try {
+        \Illuminate\Support\Facades\Mail::raw(
+            'This is a test email from Dentala on Render. Timestamp: ' . now()->toISOString(),
+            function ($message) {
+                $message->to(config('mail.from.address'))
+                        ->subject('Dentala Render SMTP Test - ' . now()->format('H:i:s'));
+            }
+        );
+        $diagnostics['email_result'] = 'SUCCESS - Email sent!';
+    } catch (\Exception $e) {
+        $diagnostics['email_result'] = 'FAILED';
+        $diagnostics['error_message'] = $e->getMessage();
+        $diagnostics['error_class'] = get_class($e);
+        $diagnostics['error_trace'] = array_slice(explode("\n", $e->getTraceAsString()), 0, 5);
+    }
+
+    return response()->json($diagnostics, 200, [], JSON_PRETTY_PRINT);
+});
+
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES
