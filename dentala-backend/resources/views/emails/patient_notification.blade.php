@@ -114,9 +114,9 @@
             </div>
             <div class="detail-row">
                 <span class="detail-label">Service Type:</span>
-                <span class="detail-value">{{ $appointment->service_type }} {{ $appointment->custom_service ? "({$appointment->custom_service})" : "" }}</span>
+                <span class="detail-value">{{ $appointment->service_type }} {{ $appointment->custom_service ?? null ? "({$appointment->custom_service})" : "" }}</span>
             </div>
-            @if($appointment->hmo_provider && $appointment->hmo_provider !== 'None')
+            @if(($appointment->hmo_provider ?? null) && $appointment->hmo_provider !== 'None')
                 <div class="detail-row">
                     <span class="detail-label">HMO Provider:</span>
                     <span class="detail-value" style="color: #0162e0; font-weight: bold;">{{ $appointment->hmo_provider }}</span>
