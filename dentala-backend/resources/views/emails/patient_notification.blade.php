@@ -84,7 +84,7 @@
 </head>
 <body>
     <div class="header">
-        <img src="{{ asset('images/logo.png') }}" alt="Dentala Logo">
+        <img src="https://dentala-ndex.onrender.com/images/logo.png" alt="Dentala Logo" style="max-height: 60px; margin-bottom: 5px;">
         <h1>Appointment Update</h1>
     </div>
     

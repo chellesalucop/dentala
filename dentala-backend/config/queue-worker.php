@@ -13,12 +13,12 @@ return [
     */
 
     'worker' => [
-        'sleep' => 3,
+        'sleep' => 1,
         'tries' => 3,
-        'timeout' => 60,
+        'timeout' => 90,
         'max_time' => 0,
         'rest' => 0,
-        'memory_limit' => 128,
+        'memory_limit' => 256,
     ],
 
     /*
