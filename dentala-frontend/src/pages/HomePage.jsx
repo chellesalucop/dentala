@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_URL, getProfilePhotoUrl } from '../api';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, User as UserIcon, X } from 'lucide-react';
+import { formatDentistName } from '../utils/dentists';
 
 export default function HomePage() {
   const [expandedService, setExpandedService] = useState(1);
@@ -88,7 +89,7 @@ export default function HomePage() {
     if (!Array.isArray(dentists) || dentists.length === 0) return email;
     
     const found = dentists.find(d => d.email === email);
-    return found ? `Dr. ${found.name}` : email; 
+    return found ? formatDentistName(found.name) : email; 
   };
 
   return (
@@ -241,7 +242,7 @@ export default function HomePage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold mb-1">Dr. {dentist.name}</h3>
+                  <h3 className="font-bold mb-1">{formatDentistName(dentist.name)}</h3>
                   <p className="text-sm text-gray-500 font-medium">
                     {dentist.specialization || 'General Dentistry'}
                   </p>

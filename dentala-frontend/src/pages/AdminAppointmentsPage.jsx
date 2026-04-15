@@ -3,6 +3,7 @@ import { API_URL, getProfilePhotoUrl } from '../api';
 import { Search, CheckCircle, XCircle, CheckSquare, X, Calendar, User, Mail, Phone, RotateCw, Info, Plus, UserPlus, Clock } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { formatDentistName } from '../utils/dentists';
 
 export default function AdminAppointmentsPage() {
   const [activeTab, setActiveTab] = useState('pending');
@@ -219,7 +220,7 @@ export default function AdminAppointmentsPage() {
   const getDentistName = (email) => {
     if (!Array.isArray(dentists) || dentists.length === 0) return email;
     const found = dentists.find(d => d.email === email);
-    return found ? `Dr. ${found.name}` : email;
+    return found ? formatDentistName(found.name) : email;
   };
 
   const formatTime = (timeStr) => {
@@ -248,7 +249,7 @@ export default function AdminAppointmentsPage() {
   const handlePrintReceipt = (data) => {
     // Find the actual name from the dentists array
     const dentistObj = dentists.find(d => d.email === data.preferredDentist);
-    const dentistDisplayName = dentistObj ? `Dr. ${dentistObj.name}` : data.preferredDentist;
+    const dentistDisplayName = dentistObj ? formatDentistName(dentistObj.name) : data.preferredDentist;
 
     const printWindow = window.open('', '_blank');
     const receiptContent = `

@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { API_URL } from '../api';
 import { storage } from '../utils/localStorage';
+import { formatDentistName } from '../utils/dentists';
 
 export default function AppointmentFormPage() {
   const navigate = useNavigate();
@@ -495,7 +496,7 @@ export default function AppointmentFormPage() {
               <option value="" className="text-gray-400">Select a dentist</option>
               {dentists.map(dentist => (
                 <option key={dentist.id} value={dentist.id}>
-                  Dr. {dentist.name}
+                  {formatDentistName(dentist.name)}
                 </option>
               ))}
             </select>

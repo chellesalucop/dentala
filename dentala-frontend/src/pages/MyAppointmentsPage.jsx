@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { CalendarIcon, Clock, MapPin, ChevronDown, X, AlertCircle, Save, User, Mail, Phone, Trash2 } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { formatDentistName } from '../utils/dentists';
 
 export default function MyAppointmentsPage() {
   const [activeTab, setActiveTab] = useState('upcoming');
@@ -215,7 +216,7 @@ export default function MyAppointmentsPage() {
   const getDentistName = (email) => {
     if (!Array.isArray(dentists) || dentists.length === 0) return email;
     const found = dentists.find(d => d.email === email);
-    return found ? `Dr. ${found.name}` : email;
+    return found ? formatDentistName(found.name) : email;
   };
 
   // Fetch appointments

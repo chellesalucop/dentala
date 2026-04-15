@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../api';
+import { formatDentistName } from '../utils/dentists';
 
 export default function AppointmentSummaryPage() {
   const location = useLocation();
@@ -160,7 +161,7 @@ export default function AppointmentSummaryPage() {
             <div className="mb-4">
               <label className="block text-[10px] font-bold uppercase text-gray-400">Dentist:</label>
               <p className="text-gray-900 font-medium break-words whitespace-pre-wrap">
-                {displayDentistName !== "Not Selected" ? `Dr. ${displayDentistName}` : displayDentistName}
+                {displayDentistName !== "Not Selected" ? formatDentistName(displayDentistName) : displayDentistName}
               </p>
             </div>
           </div>
