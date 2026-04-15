@@ -1067,7 +1067,7 @@ export default function AdminAppointmentsPage() {
                           className={`w-full px-4 py-3 rounded-xl border bg-white text-black outline-none ${walkinErrors.preferredDentist ? 'border-red-500' : 'border-gray-300'}`}
                         >
                           <option value="">Select Dentist</option>
-                          {dentists.map(d => <option key={d.id} value={d.email}>Dr. {d.name}</option>)}
+                          {dentists.map(d => <option key={d.id} value={d.email}>{formatDentistName(d.name)}</option>)}
                         </select>
                         {walkinErrors.preferredDentist && <p className="text-[10px] text-red-500 font-bold ml-1">{walkinErrors.preferredDentist[0]}</p>}
                       </div>
