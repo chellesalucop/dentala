@@ -116,8 +116,15 @@ class AppointmentController extends Controller
 
         // Queue emails for background processing so booking responses are not blocked by SMTP.
         try {
-            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            // 🚀 CACHE FIX: Cache dentist lookup to avoid repeated queries
+            static $dentistCache = [];
+            $dentistEmail = $appointment->preferred_dentist;
+            
+            if (!isset($dentistCache[$dentistEmail])) {
+                $dentist = \App\Models\User::where('email', $dentistEmail)->first();
+                $dentistCache[$dentistEmail] = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            }
+            $dentistName = $dentistCache[$dentistEmail];
 
             // 📧 DEBUG: Log email configuration
             \Log::info('Email configuration - Host: ' . config('mail.mailers.smtp.host'));
@@ -146,9 +153,9 @@ class AppointmentController extends Controller
                 \Log::error('Patient notification error trace: ' . $e->getTraceAsString());
             }
             
-            \Log::info('Emails queued successfully for background processing');
+            \Log::info('Emails sent successfully');
         } catch (\Exception $e) { 
-            \Log::error('Mail queueing failed: ' . $e->getMessage());
+            \Log::error('Mail sending failed: ' . $e->getMessage());
             \Log::error('Mail error trace: ' . $e->getTraceAsString());
             // Continue even if email fails - appointment is still saved
         }
@@ -407,8 +414,15 @@ class AppointmentController extends Controller
         \Log::info('Appointment status: ' . $request->status);
         
         try {
-            $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-            $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            // 🚀 CACHE FIX: Cache dentist lookup to avoid repeated queries
+            static $dentistCache = [];
+            $dentistEmail = $appointment->preferred_dentist;
+            
+            if (!isset($dentistCache[$dentistEmail])) {
+                $dentist = \App\Models\User::where('email', $dentistEmail)->first();
+                $dentistCache[$dentistEmail] = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            }
+            $dentistName = $dentistCache[$dentistEmail];
 
             Mail::to($appointment->email)->queue(new PatientNotificationMail(
                 $appointment, 
@@ -416,9 +430,9 @@ class AppointmentController extends Controller
                 $request->cancellation_reason ?? '',
                 $dentistName
             ));
-            \Log::info('Status update email queued successfully for background processing');
+            \Log::info('Status update email sent successfully');
         } catch (\Exception $e) { 
-            \Log::error('Mail queueing failed: ' . $e->getMessage());
+            \Log::error('Mail sending failed: ' . $e->getMessage());
             // Continue even if email fails - status update is still saved
         }
 
@@ -580,10 +594,17 @@ class AppointmentController extends Controller
         }
 
         $count = 0;
+        // 🚀 CACHE FIX: Cache dentist lookups for batch processing
+        $dentistCache = [];
+        
         foreach ($toRemind as $appointment) {
             try {
-                $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
-                $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+                $dentistEmail = $appointment->preferred_dentist;
+                if (!isset($dentistCache[$dentistEmail])) {
+                    $dentist = \App\Models\User::where('email', $dentistEmail)->first();
+                    $dentistCache[$dentistEmail] = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+                }
+                $dentistName = $dentistCache[$dentistEmail];
 
                 Mail::to($appointment->email)->queue(new PatientNotificationMail(
                     $appointment, 

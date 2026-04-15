@@ -10,6 +10,7 @@ services:
     plan: free
     region: oregon
     healthCheckPath: /api/health
+    healthCheckTimeout: 30
     autoDeploy: true
     envVars:
       - key: APP_ENV
@@ -122,7 +123,7 @@ services:
       - key: MAIL_USERNAME
         value: a79f53001@smtp-brevo.com
       - key: MAIL_PASSWORD
-        sync: false  # Set this in Render Dashboard → Environment (GitHub blocks secrets in code)
+        sync: false  
       - key: MAIL_ENCRYPTION
         value: tls
       - key: MAIL_FROM_ADDRESS
@@ -131,6 +132,7 @@ services:
         value: "Dentala Clinic"
       - key: SERVICE_TYPE
         value: worker
+    startCommand: php artisan queue:work --sleep=3 --tries=3 --max-time=300
 
 databases:
   - name: dentala-db
