@@ -30,8 +30,7 @@ class AppointmentController extends Controller
 
         \Log::info('appointments/index: Starting query for user ' . $user->id);
 
-        // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
-        // This should be handled by a scheduled job instead
+        $this->autoExpireAppointments();
 
         // 🛡️ PATIENT FULL IDENTITY PAYLOAD: Include profile photo and booking email
         $appointments = Appointment::where('appointments.user_id', $user->id)
@@ -58,6 +57,8 @@ class AppointmentController extends Controller
     {
         $user = $request->user();
         if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+        $this->autoExpireAppointments();
 
         // 🛡️ THE "STRICT TOTAL" GUARD
         // We count both PENDING and CONFIRMED. 
@@ -303,8 +304,7 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Access Denied.'], 403);
         }
 
-        // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
-        // This should be handled by a scheduled job instead
+        $this->autoExpireAppointments($user->email);
 
         // 🛡️ ADMIN STRENGTH: Include all fields for comprehensive appointment management
         // 🔄 CHRONOLOGICAL QUEUE: Two-tier sorting for admin workflow
@@ -335,8 +335,7 @@ class AppointmentController extends Controller
         $user = $request->user();
         if ($user->role !== 'admin') return response()->json(['message' => 'Access Denied.'], 403);
 
-        // PERFORMANCE FIX: Don't run autoExpireAppointments on every load
-        // This should be handled by a scheduled job instead 
+        $this->autoExpireAppointments($user->email);
 
         // Use the imported Carbon class correctly
         $today = \Carbon\Carbon::today()->toDateString();
@@ -488,6 +487,8 @@ class AppointmentController extends Controller
     {
         $request->validate(['date' => 'required|date']);
         $date = $request->query('date');
+
+        $this->autoExpireAppointments();
 
         // 🛡️ OPTIMIZED: Use select and index for faster query
         $takenSlots = Appointment::where('appointment_date', $date)
@@ -662,39 +663,78 @@ class AppointmentController extends Controller
      */
     private function autoExpireAppointments($dentistEmail = null)
     {
-        $now = \Carbon\Carbon::now();
-        $today = $now->toDateString();
-        
-        // 🛡️ THE FIX: Match the '07:00 AM' format stored in your DB
-        $currentTime = $now->format('h:i A'); 
+        $now = Carbon::now();
 
-        $query = Appointment::where('status', 'pending');
+        $query = Appointment::query()
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->whereDate('appointment_date', '<=', $now->toDateString());
 
         // If a dentist email is provided (Admin view), scope it to them
         if ($dentistEmail) {
             $query->whereRaw('LOWER(preferred_dentist) = ?', [strtolower($dentistEmail)]);
         }
 
-        // PERFORMANCE FIX: Only check for expired appointments, don't send emails here
-        // Email sending for expired appointments should be handled by a scheduled job
-        $toExpire = $query->where(function ($q) use ($today, $currentTime) {
-            $q->where('appointment_date', '<', $today) // Any date before today
-                  ->orWhere(function ($sub) use ($today, $currentTime) {
-                      $sub->where('appointment_date', $today)
-                          ->where('preferred_time', '<', $currentTime); // Today, but time passed
-                  });
-        })->get(); 
+        $toExpire = $query->get()->filter(function (Appointment $appointment) use ($now) {
+            return $this->isAppointmentOverdue($appointment, $now);
+        });
 
         if ($toExpire->isNotEmpty()) {
-            // Perform mass update without email sending (much faster)
             Appointment::whereIn('id', $toExpire->pluck('id'))->update([
                 'status' => 'expired',
                 'updated_at' => now(),
                 'cancellation_reason' => 'Automatically expired: Appointment time has passed without clinic action.'
             ]);
             
-            // Log expired appointments for debugging
             \Log::info("Expired " . $toExpire->count() . " appointments without email notifications");
+        }
+    }
+
+    private function isAppointmentOverdue(Appointment $appointment, Carbon $now): bool
+    {
+        $appointmentDate = $appointment->getRawOriginal('appointment_date') ?: $appointment->appointment_date;
+        $preferredTime = $appointment->getRawOriginal('preferred_time') ?: $appointment->preferred_time;
+
+        if (empty($appointmentDate) || empty($preferredTime)) {
+            return false;
+        }
+
+        $dateTime = $this->parseAppointmentDateTime((string) $appointmentDate, (string) $preferredTime);
+
+        if (!$dateTime) {
+            \Log::warning('Failed to parse appointment datetime for expiration check', [
+                'appointment_id' => $appointment->id,
+                'appointment_date' => $appointmentDate,
+                'preferred_time' => $preferredTime,
+            ]);
+
+            return false;
+        }
+
+        return $dateTime->lte($now);
+    }
+
+    private function parseAppointmentDateTime(string $appointmentDate, string $preferredTime): ?Carbon
+    {
+        $normalizedTime = trim($preferredTime);
+        $formats = [
+            'Y-m-d h:i A',
+            'Y-m-d g:i A',
+            'Y-m-d H:i',
+            'Y-m-d H:i:s',
+        ];
+
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, trim($appointmentDate) . ' ' . $normalizedTime);
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        try {
+            return Carbon::parse(trim($appointmentDate) . ' ' . $normalizedTime);
+        } catch (\Throwable) {
+            return null;
         }
     }
 }
