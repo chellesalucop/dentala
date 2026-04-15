@@ -120,9 +120,9 @@ class AuthController extends Controller
             ]
         );
 
-        // ✅ THE FIX: ADD THIS LINE TO ACTUALLY SEND THE EMAIL
+        // Queue the OTP email so the API response is not blocked by SMTP latency.
         try {
-            Mail::to($request->email)->send(new \App\Mail\OtpMail($otp));
+            Mail::to($request->email)->queue(new \App\Mail\OtpMail($otp));
             
             return response()->json([
                 'message' => 'OTP sent successfully.',
@@ -130,7 +130,7 @@ class AuthController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            // Log the error so you can see it in storage/logs/laravel.log
+            // Log queue push failures so you can inspect them in storage/logs/laravel.log.
             \Log::error("Mail Error: " . $e->getMessage());
             
             return response()->json([

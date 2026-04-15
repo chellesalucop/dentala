@@ -114,8 +114,7 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::create($validated);
 
-        // 🚀 PERFORMANCE FIX: Queue emails for background processing
-        // This prevents the 1-minute wait time for users
+        // Queue emails for background processing so booking responses are not blocked by SMTP.
         try {
             $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
             $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
@@ -129,8 +128,8 @@ class AppointmentController extends Controller
             if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
                 \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
                 try {
-                    Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
-                    \Log::info('Admin notification sent successfully to: ' . $appointment->preferred_dentist);
+                    Mail::to($appointment->preferred_dentist)->queue(new AdminNotificationMail($appointment, 'New Booking'));
+                    \Log::info('Admin notification queued successfully to: ' . $appointment->preferred_dentist);
                 } catch (\Exception $e) {
                     \Log::error('Admin notification failed: ' . $e->getMessage());
                     \Log::error('Admin notification error trace: ' . $e->getTraceAsString());
@@ -140,8 +139,8 @@ class AppointmentController extends Controller
             // Send patient notification
             \Log::info('Sending patient notification to: ' . $appointment->email);
             try {
-                Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
-                \Log::info('Patient notification sent successfully to: ' . $appointment->email);
+                Mail::to($appointment->email)->queue(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+                \Log::info('Patient notification queued successfully to: ' . $appointment->email);
             } catch (\Exception $e) {
                 \Log::error('Patient notification failed: ' . $e->getMessage());
                 \Log::error('Patient notification error trace: ' . $e->getTraceAsString());
@@ -176,7 +175,7 @@ class AppointmentController extends Controller
         
         try {
             \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
+                ->queue(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
             \Log::info('Patient confirmation email queued successfully to dentist');
         } catch (\Exception $e) { 
             \Log::error('Confirmation Mail queueing failed: ' . $e->getMessage());
@@ -209,7 +208,7 @@ class AppointmentController extends Controller
         // � PERFORMANCE FIX: Queue cancellation email for background processing
         try {
             \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
+                ->queue(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
             \Log::info('Cancellation email queued successfully to dentist');
         } catch (\Exception $e) { 
             \Log::error("Cancellation Mail queueing failed: " . $e->getMessage());
@@ -411,7 +410,7 @@ class AppointmentController extends Controller
             $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
             $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-            Mail::to($appointment->email)->send(new PatientNotificationMail(
+            Mail::to($appointment->email)->queue(new PatientNotificationMail(
                 $appointment, 
                 $request->status, 
                 $request->cancellation_reason ?? '',
@@ -542,7 +541,7 @@ class AppointmentController extends Controller
 
         // 📧 Trigger the Email Notification
         try {
-            Mail::to($appointment->email)->send(new WalkinReceiptMail($appointment));
+            Mail::to($appointment->email)->queue(new WalkinReceiptMail($appointment));
         } catch (\Exception $e) {
             // Log error but don't stop the response; the appointment is still saved
             \Log::error("Mail failed: " . $e->getMessage());
@@ -586,7 +585,7 @@ class AppointmentController extends Controller
                 $dentist = \App\Models\User::where('email', $appointment->preferred_dentist)->first();
                 $dentistName = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
 
-                Mail::to($appointment->email)->send(new PatientNotificationMail(
+                Mail::to($appointment->email)->queue(new PatientNotificationMail(
                     $appointment, 
                     'reminder', 
                     'Friendly reminder: Your appointment is scheduled for tomorrow. Please arrive 15 minutes early. We look forward to seeing you!',
