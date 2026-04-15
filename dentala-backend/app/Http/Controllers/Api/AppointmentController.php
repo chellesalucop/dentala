@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Mail\WalkinReceiptMail;
 use App\Mail\PatientNotificationMail;
 use App\Mail\AdminNotificationMail;
+use App\Services\BrevoApiMailer;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -135,7 +136,7 @@ class AppointmentController extends Controller
             if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
                 \Log::info('Sending admin notification to: ' . $appointment->preferred_dentist);
                 try {
-                    Mail::to($appointment->preferred_dentist)->send(new AdminNotificationMail($appointment, 'New Booking'));
+                    app(BrevoApiMailer::class)->sendMailable($appointment->preferred_dentist, new AdminNotificationMail($appointment, 'New Booking'));
                     \Log::info('Admin notification sent successfully to: ' . $appointment->preferred_dentist);
                 } catch (\Exception $e) {
                     \Log::error('Admin notification failed: ' . $e->getMessage());
@@ -146,7 +147,7 @@ class AppointmentController extends Controller
             // Send patient notification
             \Log::info('Sending patient notification to: ' . $appointment->email);
             try {
-                Mail::to($appointment->email)->send(new PatientNotificationMail($appointment, 'pending', '', $dentistName));
+                app(BrevoApiMailer::class)->sendMailable($appointment->email, new PatientNotificationMail($appointment, 'pending', '', $dentistName));
                 \Log::info('Patient notification sent successfully to: ' . $appointment->email);
             } catch (\Exception $e) {
                 \Log::error('Patient notification failed: ' . $e->getMessage());
@@ -180,8 +181,7 @@ class AppointmentController extends Controller
         \Log::info('Sending patient confirmation email to dentist: ' . $appointment->preferred_dentist);
         
         try {
-            \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
+            app(BrevoApiMailer::class)->sendMailable($appointment->preferred_dentist, new \App\Mail\AdminNotificationMail($appointment, 'Patient Confirmed'));
             \Log::info('Patient confirmation email sent successfully to dentist');
         } catch (\Exception $e) { 
             \Log::error('Confirmation mail sending failed: ' . $e->getMessage());
@@ -213,8 +213,7 @@ class AppointmentController extends Controller
 
         // Send cancellation email directly from the web process.
         try {
-            \Illuminate\Support\Facades\Mail::to($appointment->preferred_dentist)
-                ->send(new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
+            app(BrevoApiMailer::class)->sendMailable($appointment->preferred_dentist, new \App\Mail\AdminNotificationMail($appointment, 'Patient Cancellation'));
             \Log::info('Cancellation email sent successfully to dentist');
         } catch (\Exception $e) { 
             \Log::error("Cancellation mail sending failed: " . $e->getMessage());
@@ -422,7 +421,7 @@ class AppointmentController extends Controller
             }
             $dentistName = $dentistCache[$dentistEmail];
 
-            Mail::to($appointment->email)->send(new PatientNotificationMail(
+            app(BrevoApiMailer::class)->sendMailable($appointment->email, new PatientNotificationMail(
                 $appointment, 
                 $request->status, 
                 $request->cancellation_reason ?? '',
@@ -553,7 +552,7 @@ class AppointmentController extends Controller
 
         // 📧 Trigger the Email Notification
         try {
-            Mail::to($appointment->email)->send(new WalkinReceiptMail($appointment));
+            app(BrevoApiMailer::class)->sendMailable($appointment->email, new WalkinReceiptMail($appointment));
         } catch (\Exception $e) {
             // Log error but don't stop the response; the appointment is still saved
             \Log::error("Mail failed: " . $e->getMessage());
@@ -604,7 +603,7 @@ class AppointmentController extends Controller
                 }
                 $dentistName = $dentistCache[$dentistEmail];
 
-                Mail::to($appointment->email)->send(new PatientNotificationMail(
+                app(BrevoApiMailer::class)->sendMailable($appointment->email, new PatientNotificationMail(
                     $appointment, 
                     'reminder', 
                     'Friendly reminder: Your appointment is scheduled for tomorrow. Please arrive 15 minutes early. We look forward to seeing you!',

@@ -28,6 +28,16 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'brevo' => [
+        'key' => env('BREVO_API_KEY'),
+        'base_url' => env('BREVO_BASE_URL', 'https://api.brevo.com/v3'),
+        'timeout' => env('BREVO_TIMEOUT', 10),
+        'from' => [
+            'address' => env('BREVO_FROM_ADDRESS', env('MAIL_FROM_ADDRESS')),
+            'name' => env('BREVO_FROM_NAME', env('MAIL_FROM_NAME', 'Dentala Clinic')),
+        ],
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

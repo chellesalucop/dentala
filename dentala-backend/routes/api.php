@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Services\BrevoApiMailer;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
@@ -50,6 +51,7 @@ Route::get('/health', function () {
 Route::get('/test-email-diagnostic', function () {
     $diagnostics = [
         'timestamp' => now()->toISOString(),
+        'delivery_transport' => 'brevo_api',
         'mail_config' => [
             'mailer' => config('mail.default'),
             'host' => config('mail.mailers.smtp.host'),
@@ -62,6 +64,13 @@ Route::get('/test-email-diagnostic', function () {
             'from_name' => config('mail.from.name'),
             'queue_connection' => config('queue.default'),
         ],
+        'brevo_config' => [
+            'base_url' => config('services.brevo.base_url'),
+            'api_key_set' => !empty(config('services.brevo.key')),
+            'timeout' => config('services.brevo.timeout'),
+            'from_address' => config('services.brevo.from.address', config('mail.from.address')),
+            'from_name' => config('services.brevo.from.name', config('mail.from.name')),
+        ],
         'env_check' => [
             'MAIL_MAILER' => env('MAIL_MAILER', 'NOT SET'),
             'MAIL_HOST' => env('MAIL_HOST', 'NOT SET'),
@@ -70,19 +79,20 @@ Route::get('/test-email-diagnostic', function () {
             'MAIL_PASSWORD_SET' => !empty(env('MAIL_PASSWORD')),
             'MAIL_ENCRYPTION' => env('MAIL_ENCRYPTION', 'NOT SET'),
             'MAIL_FROM_ADDRESS' => env('MAIL_FROM_ADDRESS', 'NOT SET'),
+            'BREVO_API_KEY_SET' => !empty(env('BREVO_API_KEY')),
         ],
     ];
 
-    // Try sending a real test email
+    // Try sending a real test email through the Brevo API.
     try {
-        \Illuminate\Support\Facades\Mail::raw(
-            'This is a test email from Dentala on Render. Timestamp: ' . now()->toISOString(),
-            function ($message) {
-                $message->to(config('mail.from.address'))
-                        ->subject('Dentala Render SMTP Test - ' . now()->format('H:i:s'));
-            }
+        app(BrevoApiMailer::class)->sendEmail(
+            config('mail.from.address'),
+            'Dentala Render Brevo API Test - ' . now()->format('H:i:s'),
+            '<p>This is a test email from Dentala on Render via Brevo API.</p><p>Timestamp: ' . e(now()->toISOString()) . '</p>',
+            config('mail.from.name'),
+            'This is a test email from Dentala on Render via Brevo API. Timestamp: ' . now()->toISOString()
         );
-        $diagnostics['email_result'] = 'SUCCESS - Email sent!';
+        $diagnostics['email_result'] = 'SUCCESS - Email sent via Brevo API!';
     } catch (\Exception $e) {
         $diagnostics['email_result'] = 'FAILED';
         $diagnostics['error_message'] = $e->getMessage();

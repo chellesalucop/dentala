@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use App\Mail\OtpMail;
+use App\Services\BrevoApiMailer;
 
 class AuthController extends Controller
 {
@@ -122,7 +123,7 @@ class AuthController extends Controller
 
         // Send the OTP email directly from the web process so delivery does not depend on a worker.
         try {
-            Mail::to($request->email)->send(new \App\Mail\OtpMail($otp));
+            app(BrevoApiMailer::class)->sendMailable($request->email, new OtpMail($otp));
             
             return response()->json([
                 'message' => 'OTP sent successfully.',

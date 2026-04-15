@@ -59,6 +59,8 @@ services:
         value: a79f53001@smtp-brevo.com
       - key: MAIL_PASSWORD
         sync: false  # Set this in Render Dashboard → Environment (GitHub blocks secrets in code)
+      - key: BREVO_API_KEY
+        sync: false
       - key: MAIL_ENCRYPTION
         value: tls
       - key: MAIL_FROM_ADDRESS
@@ -124,6 +126,8 @@ services:
         value: a79f53001@smtp-brevo.com
       - key: MAIL_PASSWORD
         sync: false  
+      - key: BREVO_API_KEY
+        sync: false
       - key: MAIL_ENCRYPTION
         value: tls
       - key: MAIL_FROM_ADDRESS
