@@ -48,7 +48,7 @@ services:
       - key: SESSION_DRIVER
         value: database
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync
       - key: MAIL_MAILER
         value: smtp
       - key: MAIL_HOST
