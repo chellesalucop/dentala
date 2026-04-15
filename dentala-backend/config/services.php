@@ -29,7 +29,9 @@ return [
     ],
 
     'brevo' => [
-        'key' => env('BREVO_API_KEY'),
+        'key' => env('BREVO_API_KEY')
+            ?: env('SENDINBLUE_API_KEY')
+            ?: (str_starts_with((string) env('MAIL_PASSWORD', ''), 'xkeysib-') ? env('MAIL_PASSWORD') : null),
         'base_url' => env('BREVO_BASE_URL', 'https://api.brevo.com/v3'),
         'timeout' => env('BREVO_TIMEOUT', 10),
         'from' => [

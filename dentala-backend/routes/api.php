@@ -67,6 +67,11 @@ Route::get('/test-email-diagnostic', function () {
         'brevo_config' => [
             'base_url' => config('services.brevo.base_url'),
             'api_key_set' => !empty(config('services.brevo.key')),
+            'api_key_source' => !empty(env('BREVO_API_KEY'))
+                ? 'BREVO_API_KEY'
+                : (!empty(env('SENDINBLUE_API_KEY'))
+                    ? 'SENDINBLUE_API_KEY'
+                    : (str_starts_with((string) env('MAIL_PASSWORD', ''), 'xkeysib-') ? 'MAIL_PASSWORD' : 'missing')),
             'timeout' => config('services.brevo.timeout'),
             'from_address' => config('services.brevo.from.address', config('mail.from.address')),
             'from_name' => config('services.brevo.from.name', config('mail.from.name')),
@@ -77,9 +82,11 @@ Route::get('/test-email-diagnostic', function () {
             'MAIL_PORT' => env('MAIL_PORT', 'NOT SET'),
             'MAIL_USERNAME' => env('MAIL_USERNAME', 'NOT SET'),
             'MAIL_PASSWORD_SET' => !empty(env('MAIL_PASSWORD')),
+            'MAIL_PASSWORD_IS_API_KEY' => str_starts_with((string) env('MAIL_PASSWORD', ''), 'xkeysib-'),
             'MAIL_ENCRYPTION' => env('MAIL_ENCRYPTION', 'NOT SET'),
             'MAIL_FROM_ADDRESS' => env('MAIL_FROM_ADDRESS', 'NOT SET'),
             'BREVO_API_KEY_SET' => !empty(env('BREVO_API_KEY')),
+            'SENDINBLUE_API_KEY_SET' => !empty(env('SENDINBLUE_API_KEY')),
         ],
     ];
 

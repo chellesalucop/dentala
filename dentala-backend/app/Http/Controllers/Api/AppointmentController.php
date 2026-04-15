@@ -245,6 +245,47 @@ class AppointmentController extends Controller
         $appointment->status = 'pending'; 
         $appointment->save();
 
+        // Send reschedule notification emails directly from the web process
+        try {
+            // Cache dentist lookup to avoid repeated queries
+            static $dentistCache = [];
+            $dentistEmail = $appointment->preferred_dentist;
+            
+            if (!isset($dentistCache[$dentistEmail])) {
+                $dentist = \App\Models\User::where('email', $dentistEmail)->first();
+                $dentistCache[$dentistEmail] = $dentist ? $dentist->name : 'Dentala Clinic Specialist';
+            }
+            $dentistName = $dentistCache[$dentistEmail];
+
+            // Send admin notification (if different from patient email)
+            if (strtolower($appointment->preferred_dentist) !== strtolower($appointment->email)) {
+                \Log::info('Sending reschedule admin notification to: ' . $appointment->preferred_dentist);
+                try {
+                    app(BrevoApiMailer::class)->sendMailable($appointment->preferred_dentist, new AdminNotificationMail($appointment, 'Reschedule Request'));
+                    \Log::info('Reschedule admin notification sent successfully to: ' . $appointment->preferred_dentist);
+                } catch (\Exception $e) {
+                    \Log::error('Reschedule admin notification failed: ' . $e->getMessage());
+                    \Log::error('Reschedule admin notification error trace: ' . $e->getTraceAsString());
+                }
+            }
+            
+            // Send patient notification
+            \Log::info('Sending reschedule patient notification to: ' . $appointment->email);
+            try {
+                app(BrevoApiMailer::class)->sendMailable($appointment->email, new PatientNotificationMail($appointment, 'pending', 'Your appointment has been rescheduled. Please wait for admin confirmation.', $dentistName));
+                \Log::info('Reschedule patient notification sent successfully to: ' . $appointment->email);
+            } catch (\Exception $e) {
+                \Log::error('Reschedule patient notification failed: ' . $e->getMessage());
+                \Log::error('Reschedule patient notification error trace: ' . $e->getTraceAsString());
+            }
+            
+            \Log::info('Reschedule emails processed successfully');
+        } catch (\Exception $e) { 
+            \Log::error('Reschedule mail sending failed: ' . $e->getMessage());
+            \Log::error('Reschedule mail error trace: ' . $e->getTraceAsString());
+            // Continue even if email fails - appointment is still rescheduled
+        }
+
         return response()->json([
             'message' => 'Appointment rescheduled successfully.',
             'appointment' => $appointment
